@@ -1,0 +1,1958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Kute Fortune - Residential Society App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .sidebar {
+            transition: all 0.3s ease;
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            font-size: 10px;
+            background-color: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chart-container {
+            position: relative;
+            height: 250px;
+            width: 100%;
+        }
+        .event-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+        .dropdown-menu {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 100%;
+            background-color: white;
+            min-width: 200px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-radius: 0.5rem;
+            z-index: 50;
+        }
+        .dropdown:hover .dropdown-menu {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <div class="flex h-screen overflow-hidden">
+        <!-- Sidebar -->
+        <div class="sidebar bg-indigo-800 text-white w-64 md:w-20 lg:w-64 flex-shrink-0 overflow-y-auto">
+            <div class="p-4 flex items-center justify-between md:justify-center lg:justify-between">
+                <h1 class="text-xl font-bold hidden md:hidden lg:block">Kute Fortune</h1>
+                <button class="md:hidden lg:hidden text-white">
+                    <i class="fas fa-home text-2xl"></i>
+                </button>
+                <button class="text-white md:hidden lg:block opacity-50 cursor-not-allowed" id="sidebarToggle" disabled>
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+            <nav class="mt-6">
+                <div class="px-4">
+                    <div class="relative">
+                        <input type="text" placeholder="Search..." class="w-full bg-indigo-700 text-white px-4 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 placeholder-indigo-300 hidden md:hidden lg:block">
+                        <button class="absolute right-3 top-2 text-indigo-300 hidden md:hidden lg:block">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <button class="md:block lg:hidden text-center w-full py-3 text-white">
+                            <i class="fas fa-search text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="mt-8">
+                    <a id="dashboardLink" href="#" class="flex items-center px-6 py-3 text-indigo-200 hover:bg-indigo-700 hover:text-white">
+                        <i class="fas fa-home mr-4 md:mr-0 lg:mr-4 text-xl"></i>
+                        <span class="hidden md:hidden lg:block">Dashboard</span>
+                    </a>
+                    <a id="residentsLink" href="#residents" class="flex items-center px-6 py-3 text-indigo-200 hover:bg-indigo-700 hover:text-white">
+                        <i class="fas fa-users mr-4 md:mr-0 lg:mr-4 text-xl"></i>
+                        <span class="hidden md:hidden lg:block">Residents</span>
+                        <span id="residentsCount" class="ml-auto hidden md:hidden lg:block bg-white text-indigo-700 text-xs font-bold px-2 py-1 rounded-full">1</span>
+                    </a>
+                    <a id="eventsLink" href="#events" class="flex items-center px-6 py-3 text-indigo-200 hover:bg-indigo-700 hover:text-white">
+                        <i class="fas fa-calendar-alt mr-4 md:mr-0 lg:mr-4 text-xl"></i>
+                        <span class="hidden md:hidden lg:block">Events</span>
+                    </a>
+                    <a id="billingLink" href="#billing" class="flex items-center px-6 py-3 text-indigo-200 hover:bg-indigo-700 hover:text-white">
+                        <i class="fas fa-file-invoice-dollar mr-4 md:mr-0 lg:mr-4 text-xl"></i>
+                        <span class="hidden md:hidden lg:block">Billing</span>
+                    </a>
+                    <a id="complaintsLink" href="#complaints" class="flex items-center px-6 py-3 text-indigo-200 hover:bg-indigo-700 hover:text-white">
+                        <i class="fas fa-comments mr-4 md:mr-0 lg:mr-4 text-xl"></i>
+                        <span class="hidden md:hidden lg:block">Complaints</span>
+                    </a>
+                    <a id="maintenanceLink" href="#maintenance" class="flex items-center px-6 py-3 text-indigo-200 hover:bg-indigo-700 hover:text-white">
+                        <i class="fas fa-clipboard-list mr-4 md:mr-0 lg:mr-4 text-xl"></i>
+                        <span class="hidden md:hidden lg:block">Maintenance</span>
+                    </a>
+                    <a id="visitorsLink" href="#visitors" class="flex items-center px-6 py-3 text-indigo-200 hover:bg-indigo-700 hover:text-white">
+                        <i class="fas fa-user-friends mr-4 md:mr-0 lg:mr-4 text-xl"></i>
+                        <span class="hidden md:hidden lg:block">Visitors</span>
+                    </a>
+                    <a id="notificationsLink" href="#notifications" class="flex items-center px-6 py-3 text-indigo-200 hover:bg-indigo-700 hover:text-white">
+                        <i class="fas fa-bell mr-4 md:mr-0 lg:mr-4 text-xl"></i>
+                        <span class="hidden md:hidden lg:block">Notifications</span>
+                    </a>
+                    <a href="#" class="flex items-center px-6 py-3 text-indigo-200 hover:bg-indigo-700 hover:text-white">
+                        <i class="fas fa-cog mr-4 md:mr-0 lg:mr-4 text-xl"></i>
+                        <span class="hidden md:hidden lg:block">Settings</span>
+                    </a>
+                </div>
+            </nav>
+        </div>
+
+        <!-- Main Content -->
+        <div class="flex-1 overflow-auto">
+            <!-- Top Navigation -->
+            <header class="bg-white shadow-sm">
+                <div class="flex items-center justify-between px-6 py-4">
+                    <h2 class="text-xl font-semibold text-gray-800">Dashboard</h2>
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            <button class="text-gray-600 hover:text-gray-900">
+                                <i class="fas fa-bell text-xl"></i>
+                                <span class="notification-badge" id="notificationBadge">0</span>
+                            </button>
+                        </div>
+                        <div id="authArea" class="flex items-center">
+                            <!-- Login Button (shown when not signed in) -->
+                            <button id="loginBtn" class="bg-white border border-gray-300 rounded-lg px-4 py-2 flex items-center cursor-pointer hover:bg-gray-50">
+                                <i class="fas fa-sign-in-alt w-4 h-4 mr-2"></i>
+                                <span class="text-sm font-medium text-gray-700">Login</span>
+                            </button>
+                            <!-- User Profile (shown when signed in) -->
+                            <div id="userProfile" class="hidden dropdown relative ml-4">
+                                <button class="flex items-center space-x-2 focus:outline-none" id="profileBtn">
+                                    <i class="fas fa-user-circle w-8 h-8 text-2xl text-gray-600"></i>
+                                    <span id="userName" class="hidden md:block text-sm font-medium">User</span>
+                                </button>
+                                <div class="dropdown-menu mt-2 py-2 w-48">
+                                    <div class="px-4 py-2 text-sm">
+                                        <div class="font-medium" id="profileName">User</div>
+                                        <div class="text-gray-500 truncate" id="profileEmail">user@example.com</div>
+                            </div>
+                                    <div class="border-t border-gray-100"></div>
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Your Profile</a>
+                                    <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Settings</a>
+                                    <div class="border-t border-gray-100"></div>
+                                    <a href="#" id="logoutBtn" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">Logout</a>
+                        </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Content Area -->
+            <main class="p-6">
+                <!-- Welcome Banner -->
+                <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl p-6 text-white mb-6 relative overflow-hidden">
+                    <!-- Dark overlay for clarity -->
+                    <div class="absolute inset-0 bg-black opacity-40 z-10"></div>
+                    <div class="absolute inset-0 opacity-20 z-0">
+                        <img src="images/kute-fortune-building.jpg" alt="Society Building" class="w-full h-full object-cover">
+                    </div>
+                    <div class="relative flex flex-col md:flex-row justify-between items-start md:items-center z-20">
+                        <div>
+                            <h3 class="text-2xl font-bold mb-2">Welcome to Kute Fortune</h3>
+                            <p class="opacity-90">Here's what's happening in your society today.</p>
+                        </div>
+                        <button class="mt-4 md:mt-0 bg-white text-indigo-600 px-6 py-2 rounded-lg font-medium hover:bg-gray-100 transition" id="viewAnnouncementsBtn">View Announcements</button>
+                    </div>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                    <div class="bg-white rounded-xl shadow-sm p-6 hover:shadow-md transition cursor-pointer" onclick="window.location.href='#'">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500">Residents</p>
+                                <h3 class="text-2xl font-bold mt-1" id="dashboardResidentsCount">248</h3>
+                                <div class="flex space-x-4 mt-2 text-sm">
+                                    <span class="text-green-500" id="dashboardFamiliesCount"><i class="fas fa-home mr-1"></i> 0 Families</span>
+                                    <span class="text-blue-500" id="dashboardSinglesCount"><i class="fas fa-user mr-1"></i> 0 Singles</span>
+                                </div>
+                            </div>
+                            <div class="bg-indigo-100 p-3 rounded-full">
+                                <i class="fas fa-users text-indigo-600 text-xl"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 pt-3 border-t border-gray-100 flex justify-between items-center">
+                            <span class="text-sm text-gray-500">Last updated: Today</span>
+                            <button class="text-indigo-600 text-sm font-medium hover:text-indigo-800" onclick="showResidentsSection()">
+                                Manage <i class="fas fa-chevron-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500">Pending Complaints</p>
+                                <h3 class="text-2xl font-bold mt-1" id="dashboardPendingComplaintsCount">12</h3>
+                                <p class="text-red-500 text-sm mt-2" id="dashboardNewComplaintsToday"><i class="fas fa-arrow-up mr-1"></i> 2 new today</p>
+                            </div>
+                            <div class="bg-red-100 p-3 rounded-full">
+                                <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500">Upcoming Events</p>
+                                <h3 class="text-2xl font-bold mt-1" id="upcomingEventsCount">4</h3>
+                                <p class="text-blue-500 text-sm mt-2">Next: Society Meeting (Tomorrow)</p>
+                            </div>
+                            <div class="bg-blue-100 p-3 rounded-full">
+                                <i class="fas fa-calendar-alt text-blue-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500">Maintenance Due</p>
+                                <h3 class="text-2xl font-bold mt-1" id="dashboardMaintenanceDue">₹0</h3>
+                                <p class="text-yellow-500 text-sm mt-2">Due by 15th June</p>
+                            </div>
+                            <div class="bg-yellow-100 p-3 rounded-full">
+                                <i class="fas fa-file-invoice-dollar text-yellow-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-500">Visitors</p>
+                                <h3 class="text-2xl font-bold mt-1" id="dashboardVisitorsCount">0</h3>
+                            </div>
+                            <div class="bg-pink-100 p-3 rounded-full">
+                                <i class="fas fa-user-friends text-pink-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts and Recent Activity -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- Payment Chart -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 lg:col-span-2">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-semibold text-lg">Payment Status</h3>
+                            <select class="bg-gray-100 border-0 rounded-lg px-3 py-1 text-sm focus:ring-2 focus:ring-indigo-500">
+                                <option>This Month</option>
+                                <option>Last Month</option>
+                                <option>Last 6 Months</option>
+                            </select>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="paymentChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="font-semibold text-lg mb-4">Recent Activity</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-start">
+                                <div class="bg-green-100 p-2 rounded-full mr-3">
+                                    <i class="fas fa-check-circle text-green-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">Maintenance paid</p>
+                                    <p class="text-gray-500 text-sm">Apt 302 paid June maintenance</p>
+                                    <p class="text-gray-400 text-xs mt-1">2 hours ago</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="bg-blue-100 p-2 rounded-full mr-3">
+                                    <i class="fas fa-calendar-plus text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">New event added</p>
+                                    <p class="text-gray-500 text-sm">Annual society picnic on 25th June</p>
+                                    <p class="text-gray-400 text-xs mt-1">5 hours ago</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="bg-red-100 p-2 rounded-full mr-3">
+                                    <i class="fas fa-exclamation-triangle text-red-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">New complaint</p>
+                                    <p class="text-gray-500 text-sm">Parking issue reported by Apt 105</p>
+                                    <p class="text-gray-400 text-xs mt-1">Yesterday</p>
+                                </div>
+                            </div>
+                            <div class="flex items-start">
+                                <div class="bg-purple-100 p-2 rounded-full mr-3">
+                                    <i class="fas fa-user-plus text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium">New resident</p>
+                                    <p class="text-gray-500 text-sm">Family moved into Apt 410</p>
+                                    <p class="text-gray-400 text-xs mt-1">2 days ago</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upcoming Events and Quick Actions -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Upcoming Events -->
+                    <div class="bg-white rounded-xl shadow-sm p-6 lg:col-span-2">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="font-semibold text-lg">Upcoming Events</h3>
+                            <button class="text-indigo-600 hover:text-indigo-800 text-sm font-medium" id="viewAllEventsBtn">View All</button>
+                        </div>
+                        <div id="upcomingEventsList" class="flex flex-col gap-4">
+                            <!-- Upcoming events will be rendered here -->
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="font-semibold text-lg mb-4">Quick Actions</h3>
+                        <div class="grid grid-cols-2 gap-4">
+                            <button class="bg-indigo-50 hover:bg-indigo-100 text-indigo-600 rounded-lg p-4 flex flex-col items-center justify-center transition">
+                                <i class="fas fa-user-plus text-2xl mb-2"></i>
+                                <span class="text-sm font-medium">Add Resident</span>
+                            </button>
+                            <button class="bg-green-50 hover:bg-green-100 text-green-600 rounded-lg p-4 flex flex-col items-center justify-center transition">
+                                <i class="fas fa-calendar-plus text-2xl mb-2"></i>
+                                <span class="text-sm font-medium">Create Event</span>
+                            </button>
+                            <button class="bg-blue-50 hover:bg-blue-100 text-blue-600 rounded-lg p-4 flex flex-col items-center justify-center transition">
+                                <i class="fas fa-file-invoice-dollar text-2xl mb-2"></i>
+                                <span class="text-sm font-medium">Generate Bill</span>
+                            </button>
+                            <button class="bg-red-50 hover:bg-red-100 text-red-600 rounded-lg p-4 flex flex-col items-center justify-center transition">
+                                <i class="fas fa-exclamation-circle text-2xl mb-2"></i>
+                                <span class="text-sm font-medium">Report Issue</span>
+                            </button>
+                            <button class="bg-purple-50 hover:bg-purple-100 text-purple-600 rounded-lg p-4 flex flex-col items-center justify-center transition">
+                                <i class="fas fa-bullhorn text-2xl mb-2"></i>
+                                <span class="text-sm font-medium">New Notice</span>
+                            </button>
+                            <button class="bg-yellow-50 hover:bg-yellow-100 text-yellow-600 rounded-lg p-4 flex flex-col items-center justify-center transition">
+                                <i class="fas fa-poll text-2xl mb-2"></i>
+                                <span class="text-sm font-medium">Create Poll</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </main>
+
+            <!-- Residents Management Section -->
+            <div id="residents" class="hidden p-6">
+                <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                    <h3 class="font-semibold text-lg mb-4">Update Resident Information</h3>
+                    <form id="residentForm" class="grid grid-cols-1 md:grid-cols-2 gap-6" onsubmit="event.preventDefault(); saveResident();">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Full Name</label>
+                            <input type="text" name="name" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Apartment Number</label>
+                            <input type="text" name="apartment" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Resident Type</label>
+                            <select name="type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                <option value="family">Family</option>
+                                <option value="single">Single</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Contact Number</label>
+                            <input type="tel" name="contact" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Email</label>
+                            <input type="email" name="email" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Additional Notes</label>
+                            <textarea name="notes" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" rows="3"></textarea>
+                        </div>
+                        <div class="md:col-span-2 flex justify-end space-x-4">
+                            <button type="button" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50" onclick="resetForm()">Cancel</button>
+                            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save Resident</button>
+                        </div>
+                    </form>
+                </div>
+
+
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-semibold text-lg">Residents List</h3>
+                    <div class="flex space-x-2">
+                        <button id="addFamilyBtn" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 text-sm">
+                            <i class="fas fa-users mr-1"></i> Add Family
+                        </button>
+                        <button id="addSingleBtn" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm">
+                            <i class="fas fa-user mr-1"></i> Add Single
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <h3 class="font-semibold text-lg mb-4">Residents List</h3>
+                    <div class="overflow-x-auto">
+                        <table id="residentsTable" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Apartment</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap">John Doe</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">A-101</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Family</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">+1 555-123-4567</td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-resident-btn">Edit</button>
+                                        <button class="text-red-600 hover:text-red-900 delete-resident-btn">Delete</button>
+                                    </td>
+                                </tr>
+                                <!-- More rows would be dynamically added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <button id="deleteAllResidentsBtn" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 text-sm mb-4">
+                    Delete All Residents
+                </button>
+            </div>
+
+            <!-- Events Management Section -->
+            <div id="events" class="hidden p-6">
+                <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                    <h3 class="font-semibold text-lg mb-4">Events</h3>
+                    <button id="addEventBtn" class="mb-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Add Event</button>
+                    <form id="eventForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 hidden">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Event Name</label>
+                            <input type="text" name="eventName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Date</label>
+                            <input type="date" name="eventDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Location</label>
+                            <input type="text" name="eventLocation" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Description</label>
+                            <textarea name="eventDescription" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" rows="2"></textarea>
+                        </div>
+                        <div class="md:col-span-2 flex justify-end space-x-4">
+                            <button type="button" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50" id="cancelEventBtn">Cancel</button>
+                            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save Event</button>
+                        </div>
+                    </form>
+                    <div class="overflow-x-auto">
+                        <table id="eventsTable" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Event rows will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Billing Management Section -->
+            <div id="billing" class="hidden p-6">
+                <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                    <h3 class="font-semibold text-lg mb-4">Billing</h3>
+                    <button id="addBillBtn" class="mb-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Add Bill</button>
+                    <form id="billForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 hidden">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Resident</label>
+                            <input type="text" name="billResident" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Amount (₹)</label>
+                            <input type="number" name="billAmount" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Due Date</label>
+                            <input type="date" name="billDueDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Status</label>
+                            <select name="billStatus" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                <option value="Pending">Pending</option>
+                                <option value="Paid">Paid</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2 flex justify-end space-x-4">
+                            <button type="button" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50" id="cancelBillBtn">Cancel</button>
+                            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save Bill</button>
+                        </div>
+                    </form>
+                    <div class="overflow-x-auto">
+                        <table id="billsTable" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount (₹)</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Due Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Bill rows will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Complaints Management Section -->
+            <div id="complaints" class="hidden p-6">
+                <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                    <h3 class="font-semibold text-lg mb-4">Complaints</h3>
+                    <button id="addComplaintBtn" class="mb-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Add Complaint</button>
+                    <form id="complaintForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 hidden">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Resident</label>
+                            <input type="text" name="complaintResident" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Subject</label>
+                            <input type="text" name="complaintSubject" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Date</label>
+                            <input type="date" name="complaintDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Status</label>
+                            <select name="complaintStatus" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                <option value="Pending">Pending</option>
+                                <option value="Resolved">Resolved</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2 flex justify-end space-x-4">
+                            <button type="button" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50" id="cancelComplaintBtn">Cancel</button>
+                            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save Complaint</button>
+                        </div>
+                    </form>
+                    <div class="overflow-x-auto">
+                        <table id="complaintsTable" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Subject</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Complaint rows will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Maintenance Management Section -->
+            <div id="maintenance" class="hidden p-6">
+                <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                    <h3 class="font-semibold text-lg mb-4">Maintenance</h3>
+                    <button id="addMaintenanceBtn" class="mb-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Add Task</button>
+                    <form id="maintenanceForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 hidden">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Title</label>
+                            <input type="text" name="maintenanceTitle" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Description</label>
+                            <textarea name="maintenanceDesc" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" rows="2" required></textarea>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Date</label>
+                            <input type="date" name="maintenanceDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Status</label>
+                            <select name="maintenanceStatus" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                                <option value="Pending">Pending</option>
+                                <option value="Completed">Completed</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2 flex justify-end space-x-4">
+                            <button type="button" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50" id="cancelMaintenanceBtn">Cancel</button>
+                            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save Task</button>
+                        </div>
+                    </form>
+                    <div class="overflow-x-auto">
+                        <table id="maintenanceTable" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Maintenance rows will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visitors Management Section -->
+            <div id="visitors" class="hidden p-6">
+                <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                    <h3 class="font-semibold text-lg mb-4">Visitors</h3>
+                    <button id="addVisitorBtn" class="mb-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Add Visitor</button>
+                    <form id="visitorForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 hidden">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Name</label>
+                            <input type="text" name="visitorName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Apartment</label>
+                            <input type="text" name="visitorApartment" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Date</label>
+                            <input type="date" name="visitorDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Time In</label>
+                            <input type="time" name="visitorTimeIn" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Time Out</label>
+                            <input type="time" name="visitorTimeOut" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Purpose</label>
+                            <input type="text" name="visitorPurpose" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Approver</label>
+                            <input type="text" name="visitorApprover" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500">
+                        </div>
+                        <div class="md:col-span-2 flex justify-end space-x-4">
+                            <button type="button" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50" id="cancelVisitorBtn">Cancel</button>
+                            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save Visitor</button>
+                        </div>
+                    </form>
+                    <div class="overflow-x-auto">
+                        <table id="visitorsTable" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Apartment</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time In</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time Out</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Purpose</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Approver</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Visitor rows will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Notifications Management Section -->
+            <div id="notifications" class="hidden p-6">
+                <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                    <h3 class="font-semibold text-lg mb-4">Notifications</h3>
+                    <button id="addNotificationBtn" class="mb-4 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Add Notification</button>
+                    <form id="notificationForm" class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6 hidden">
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Date</label>
+                            <input type="date" name="notificationDate" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div>
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Type</label>
+                            <input type="text" name="notificationType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" required>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-gray-700 text-sm font-medium mb-2">Message</label>
+                            <textarea name="notificationMessage" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" rows="2" required></textarea>
+                        </div>
+                        <div class="md:col-span-2 flex justify-end space-x-4">
+                            <button type="button" class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50" id="cancelNotificationBtn">Cancel</button>
+                            <button type="submit" class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">Save Notification</button>
+                        </div>
+                    </form>
+                    <div class="overflow-x-auto">
+                        <table id="notificationsTable" class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Message</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Notification rows will be added here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Sidebar toggle functionality
+        document.getElementById('sidebarToggle').addEventListener('click', function(e) {
+            e.preventDefault(); // Prevent any default navigation
+            const sidebar = document.querySelector('.sidebar');
+            sidebar.classList.toggle('hidden');
+        });
+
+        // Login functionality
+        document.getElementById('loginBtn').addEventListener('click', function() {
+            // Simulate login (replace with real auth as needed)
+            showProfile();
+        });
+
+        // Initialize payment chart
+        const paymentCtx = document.getElementById('paymentChart').getContext('2d');
+        const paymentChart = new Chart(paymentCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Paid', 'Pending'],
+                datasets: [
+                    {
+                        label: 'Bills',
+                        data: [0, 0],
+                        backgroundColor: ['#4f46e5', '#c7d2fe'],
+                        borderRadius: 4
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) {
+                                return value + '%';
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' + context.raw + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+        // Utility to update payment chart from bills table
+        function updatePaymentChart() {
+            const table = document.getElementById('billsTable');
+            let paid = 0, pending = 0, total = 0;
+            if (table) {
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const statusCell = row.cells[3];
+                    if (statusCell) {
+                        const status = statusCell.textContent.trim();
+                        if (status === 'Paid') paid++;
+                        else if (status === 'Pending') pending++;
+                    }
+                });
+                total = paid + pending;
+            }
+            let paidPct = 0, pendingPct = 0;
+            if (total > 0) {
+                paidPct = Math.round((paid / total) * 100);
+                pendingPct = 100 - paidPct;
+            }
+            paymentChart.data.datasets[0].data = [paidPct, pendingPct];
+            paymentChart.update();
+        }
+        // Update chart on bills add/edit/delete
+        document.getElementById('billForm').addEventListener('submit', function() {
+            setTimeout(updatePaymentChart, 0);
+        });
+        document.getElementById('billsTable').addEventListener('click', function(e) {
+            if (e.target && (e.target.classList.contains('delete-bill-btn') || e.target.classList.contains('edit-bill-btn') || (e.target.tagName === 'SELECT' && e.target.name === 'billStatus'))) {
+                setTimeout(updatePaymentChart, 0);
+            }
+        });
+        window.addEventListener('DOMContentLoaded', function() {
+            updatePaymentChart();
+        });
+
+        // Show residents section
+        function showResidentsSection() {
+            const residentsSection = document.getElementById('residents');
+            const mainContent = document.querySelector('main');
+            const billingSection = document.getElementById('billing');
+            const eventsSection = document.getElementById('events');
+            const maintenanceSection = document.getElementById('maintenance');
+            residentsSection.classList.remove('hidden');
+            mainContent.classList.add('hidden');
+            if (billingSection) billingSection.classList.add('hidden');
+            if (eventsSection) eventsSection.classList.add('hidden');
+            if (maintenanceSection) maintenanceSection.classList.add('hidden');
+            window.scrollTo(0, 0);
+            // Reset form when showing residents section
+            resetForm();
+            // Update sidebar active state
+            setActiveTab('residentsLink');
+        }
+
+        // Show dashboard section
+        function showDashboardSection() {
+            const residentsSection = document.getElementById('residents');
+            const mainContent = document.querySelector('main');
+            
+            residentsSection.classList.add('hidden');
+            mainContent.classList.remove('hidden');
+            window.scrollTo(0, 0);
+
+            // Update sidebar active state
+            setActiveTab('dashboardLink');
+        }
+
+        // Show events section
+        function showEventsSection() {
+            const eventsSection = document.getElementById('events');
+            const residentsSection = document.getElementById('residents');
+            const mainContent = document.querySelector('main');
+            const billingSection = document.getElementById('billing');
+            const maintenanceSection = document.getElementById('maintenance');
+            const notificationsSection = document.getElementById('notifications');
+            eventsSection.classList.remove('hidden');
+            residentsSection.classList.add('hidden');
+            mainContent.classList.add('hidden');
+            if (billingSection) billingSection.classList.add('hidden');
+            if (maintenanceSection) maintenanceSection.classList.add('hidden');
+            if (notificationsSection) notificationsSection.classList.add('hidden');
+            window.scrollTo(0, 0);
+            setActiveTab('eventsLink');
+        }
+
+        // Show billing section
+        function showBillingSection() {
+            const billingSection = document.getElementById('billing');
+            const eventsSection = document.getElementById('events');
+            const residentsSection = document.getElementById('residents');
+            const mainContent = document.querySelector('main');
+            const complaintsSection = document.getElementById('complaints');
+            const maintenanceSection = document.getElementById('maintenance');
+            billingSection.classList.remove('hidden');
+            eventsSection.classList.add('hidden');
+            residentsSection.classList.add('hidden');
+            mainContent.classList.add('hidden');
+            if (complaintsSection) complaintsSection.classList.add('hidden');
+            if (maintenanceSection) maintenanceSection.classList.add('hidden');
+            window.scrollTo(0, 0);
+            setActiveTab('billingLink');
+        }
+
+        // Show complaints section
+        function showComplaintsSection() {
+            const complaintsSection = document.getElementById('complaints');
+            const billingSection = document.getElementById('billing');
+            const eventsSection = document.getElementById('events');
+            const residentsSection = document.getElementById('residents');
+            const mainContent = document.querySelector('main');
+            const maintenanceSection = document.getElementById('maintenance');
+            complaintsSection.classList.remove('hidden');
+            billingSection.classList.add('hidden');
+            eventsSection.classList.add('hidden');
+            residentsSection.classList.add('hidden');
+            mainContent.classList.add('hidden');
+            if (maintenanceSection) maintenanceSection.classList.add('hidden');
+            window.scrollTo(0, 0);
+            setActiveTab('complaintsLink');
+        }
+        // Add event listener for Complaints tab
+        document.getElementById('complaintsLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            showComplaintsSection();
+        });
+
+        // Toggle residents section
+        document.getElementById('residentsLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            showResidentsSection();
+        });
+
+        // Add event listener for Dashboard tab
+        document.getElementById('dashboardLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            showDashboardSection();
+        });
+
+        // Add event listener for Events tab
+        document.getElementById('eventsLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            showEventsSection();
+        });
+
+        // Add event listener for Billing tab
+        document.getElementById('billingLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            showBillingSection();
+        });
+
+        // Show maintenance section
+        function showMaintenanceSection() {
+            const maintenanceSection = document.getElementById('maintenance');
+            const complaintsSection = document.getElementById('complaints');
+            const billingSection = document.getElementById('billing');
+            const eventsSection = document.getElementById('events');
+            const residentsSection = document.getElementById('residents');
+            const mainContent = document.querySelector('main');
+            maintenanceSection.classList.remove('hidden');
+            complaintsSection.classList.add('hidden');
+            billingSection.classList.add('hidden');
+            eventsSection.classList.add('hidden');
+            residentsSection.classList.add('hidden');
+            mainContent.classList.add('hidden');
+            window.scrollTo(0, 0);
+            setActiveTab('maintenanceLink');
+        }
+        // Add event listener for Maintenance tab
+        document.getElementById('maintenanceLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            showMaintenanceSection();
+        });
+
+        // Mobile menu toggle (would need more implementation for actual mobile menu)
+        document.querySelectorAll('.event-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const eventTitle = this.querySelector('h4').textContent;
+                alert(`Viewing details for: ${eventTitle}`);
+            });
+        });
+
+        // Logout functionality
+        document.getElementById('logoutBtn').addEventListener('click', function(e) {
+            e.preventDefault();
+            if(confirm('Are you sure you want to logout?')) {
+                // Create a hidden form for logout
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = '/logout';
+                
+                // Add CSRF token
+                const csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = '_token';
+                csrfInput.value = document.querySelector('meta[name="csrf-token"]').content;
+                form.appendChild(csrfInput);
+                
+                // Submit the form
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+
+        // Login/Logout functionality (local state only)
+        function showLogin() {
+            document.getElementById('loginBtn').classList.remove('hidden');
+            document.getElementById('userProfile').classList.add('hidden');
+        }
+        function showProfile() {
+            document.getElementById('loginBtn').classList.add('hidden');
+            document.getElementById('userProfile').classList.remove('hidden');
+        }
+        window.addEventListener('DOMContentLoaded', function() {
+            // Show login by default
+            showLogin();
+            // If both sections are hidden, show dashboard by default
+            const residentsSection = document.getElementById('residents');
+            const mainContent = document.querySelector('main');
+            if (residentsSection.classList.contains('hidden') && mainContent.classList.contains('hidden')) {
+                showDashboardSection();
+            }
+            // Login button event
+            document.getElementById('loginBtn').addEventListener('click', function() {
+                // Simulate login (replace with real auth as needed)
+                showProfile();
+            });
+            // Logout button event
+            document.getElementById('logoutBtn').addEventListener('click', function(e) {
+                e.preventDefault();
+                showLogin();
+            });
+            // Tab switching events
+            document.getElementById('dashboardLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                showDashboardSection();
+            });
+            document.getElementById('residentsLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                showResidentsSection();
+            });
+            document.getElementById('eventsLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                showEventsSection();
+            });
+            document.getElementById('billingLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                showBillingSection();
+            });
+            document.getElementById('complaintsLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                showComplaintsSection();
+            });
+            document.getElementById('maintenanceLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                showMaintenanceSection();
+            });
+        });
+
+        function setActiveTab(tabId) {
+            document.querySelectorAll('.sidebar a').forEach(link => {
+                link.classList.remove('bg-indigo-700', 'text-white');
+                link.classList.add('text-indigo-200', 'hover:bg-indigo-700', 'hover:text-white');
+            });
+            const activeLink = document.getElementById(tabId);
+            activeLink.classList.add('bg-indigo-700', 'text-white');
+            activeLink.classList.remove('text-indigo-200', 'hover:bg-indigo-700', 'hover:text-white');
+        }
+
+        // Utility to update residents count badge and dashboard
+        function updateResidentsCount() {
+            const table = document.getElementById('residentsTable');
+            const count = table ? table.querySelectorAll('tbody tr').length : 0;
+            document.getElementById('residentsCount').textContent = count;
+            // Update dashboard card
+            const dashCount = document.getElementById('dashboardResidentsCount');
+            if (dashCount) dashCount.textContent = count;
+        }
+
+        // Utility to update pending complaints count in dashboard
+        function updatePendingComplaintsCount() {
+            const table = document.getElementById('complaintsTable');
+            let count = 0;
+            if (table) {
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    if (row.cells[3] && row.cells[3].textContent.trim() === 'Pending') count++;
+                });
+            }
+            const dashCount = document.getElementById('dashboardPendingComplaintsCount');
+            if (dashCount) dashCount.textContent = count;
+        }
+        // Resident management logic
+        document.addEventListener('click', function(e) {
+            if (e.target && e.target.matches('.edit-resident-btn')) {
+                const row = e.target.closest('tr');
+                const cells = row.querySelectorAll('td');
+                // Populate form fields
+                const form = document.getElementById('residentForm');
+                form.name.value = cells[0].textContent;
+                form.apartment.value = cells[1].textContent;
+                form.type.value = cells[2].textContent.trim().toLowerCase();
+                form.contact.value = cells[3].textContent;
+                // Store row being edited
+                form.dataset.editingRow = row.rowIndex;
+                // Scroll to form
+                form.scrollIntoView({ behavior: 'smooth' });
+            }
+            // Handle Delete Resident
+            if (e.target && e.target.classList.contains('delete-resident-btn')) {
+                const btn = e.target;
+                let row = btn.closest('tr');
+                if (row) {
+                    if (confirm('Are you sure you want to delete this resident?')) {
+                        row.parentNode.removeChild(row);
+                        setTimeout(updateResidentsCount, 0);
+                    }
+                } else {
+                    alert('Could not find the row to delete.');
+                }
+            }
+        });
+        // Handle Save Resident (update or add)
+        document.getElementById('residentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const name = form.name.value;
+            const apartment = form.apartment.value;
+            const type = form.type.value;
+            const contact = form.contact.value;
+            const email = form.email.value;
+            const notes = form.notes.value;
+            const table = document.getElementById('residentsTable').querySelector('tbody');
+            // If editing, update row
+            if (form.dataset.editingRow) {
+                const row = table.rows[form.dataset.editingRow - 1];
+                row.cells[0].textContent = name;
+                row.cells[1].textContent = apartment;
+                row.cells[2].innerHTML = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">${type.charAt(0).toUpperCase() + type.slice(1)}</span>`;
+                row.cells[3].textContent = contact;
+                // Remove editing state
+                delete form.dataset.editingRow;
+            } else {
+                // Add new row
+                const newRow = table.insertRow();
+                newRow.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${apartment}</td>
+                    <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">${type.charAt(0).toUpperCase() + type.slice(1)}</span></td>
+                    <td class="px-6 py-4 whitespace-nowrap">${contact}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-resident-btn">Edit</button>
+                        <button class="text-red-600 hover:text-red-900 delete-resident-btn">Delete</button>
+                    </td>`;
+            }
+            // Reset form and clear editing state
+            form.reset();
+            delete form.dataset.editingRow;
+            updateResidentsCount();
+        });
+        // Update existing Edit/Delete buttons to use new classes
+        document.querySelectorAll('.text-indigo-600').forEach(btn => {
+            if (btn.textContent.trim() === 'Edit') btn.classList.add('edit-resident-btn');
+        });
+        document.querySelectorAll('.text-red-600').forEach(btn => {
+            if (btn.textContent.trim() === 'Delete') btn.classList.add('delete-resident-btn');
+        });
+
+        document.getElementById('deleteAllResidentsBtn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to delete ALL residents?')) {
+                const table = document.getElementById('residentsTable');
+                while (table.firstChild) {
+                    table.removeChild(table.firstChild);
+                }
+                setTimeout(updateResidentsCount, 0);
+            }
+        });
+
+        document.getElementById('addFamilyBtn').addEventListener('click', function() {
+            const form = document.getElementById('residentForm');
+            form.type.value = 'family';
+            form.scrollIntoView({ behavior: 'smooth' });
+            form.name.focus();
+        });
+        document.getElementById('addSingleBtn').addEventListener('click', function() {
+            const form = document.getElementById('residentForm');
+            form.type.value = 'single';
+            form.scrollIntoView({ behavior: 'smooth' });
+            form.name.focus();
+        });
+
+        // EVENTS MANAGEMENT LOGIC
+        let editingEventRow = null;
+        document.getElementById('addEventBtn').addEventListener('click', function() {
+            const form = document.getElementById('eventForm');
+            form.reset();
+            editingEventRow = null;
+            form.classList.remove('hidden');
+            form.scrollIntoView({ behavior: 'smooth' });
+        });
+        document.getElementById('cancelEventBtn').addEventListener('click', function() {
+            document.getElementById('eventForm').classList.add('hidden');
+            editingEventRow = null;
+        });
+        document.getElementById('eventForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const name = form.eventName.value;
+            const date = form.eventDate.value;
+            const location = form.eventLocation.value;
+            const desc = form.eventDescription.value;
+            const table = document.getElementById('eventsTable').querySelector('tbody');
+            if (editingEventRow) {
+                // Update existing row
+                editingEventRow.cells[0].textContent = name;
+                editingEventRow.cells[1].textContent = date;
+                editingEventRow.cells[2].textContent = location;
+                editingEventRow.cells[3].textContent = desc;
+                editingEventRow = null;
+                // Add notification for event update
+                const notifTable = document.getElementById('notificationsTable').querySelector('tbody');
+                const today = new Date().toISOString().slice(0, 10);
+                const notifRow = notifTable.insertRow();
+                notifRow.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${today}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">Event Updated</td>
+                    <td class="px-6 py-4 whitespace-nowrap">Event '${name}' was updated.</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-notification-btn">Edit</button>
+                        <button class="text-red-600 hover:text-red-900 delete-notification-btn">Delete</button>
+                    </td>`;
+            } else {
+                // Add new row
+                const newRow = table.insertRow();
+                newRow.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${location}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${desc}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-event-btn">Edit</button>
+                        <button class="text-red-600 hover:text-red-900 delete-event-btn">Delete</button>
+                    </td>`;
+            }
+            form.reset();
+            form.classList.add('hidden');
+            renderUpcomingEvents(); // <-- Add this line
+        });
+        document.getElementById('eventsTable').addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('edit-event-btn')) {
+                const row = e.target.closest('tr');
+                const form = document.getElementById('eventForm');
+                form.eventName.value = row.cells[0].textContent;
+                form.eventDate.value = row.cells[1].textContent;
+                form.eventLocation.value = row.cells[2].textContent;
+                form.eventDescription.value = row.cells[3].textContent;
+                editingEventRow = row;
+                form.classList.remove('hidden');
+                form.scrollIntoView({ behavior: 'smooth' });
+            }
+            if (e.target && e.target.classList.contains('delete-event-btn')) {
+                const row = e.target.closest('tr');
+                if (confirm('Are you sure you want to delete this event?')) {
+                    row.remove();
+                    renderUpcomingEvents(); // <-- Add this line
+                }
+            }
+        });
+
+        // --- UPCOMING EVENTS DASHBOARD LOGIC ---
+        function renderUpcomingEvents() {
+            const eventsTable = document.getElementById('eventsTable');
+            const upcomingEventsList = document.getElementById('upcomingEventsList');
+            if (!eventsTable || !upcomingEventsList) return;
+            // Gather events from table
+            const rows = Array.from(eventsTable.querySelectorAll('tbody tr'));
+            const events = rows.map(row => ({
+                name: row.cells[0].textContent,
+                date: row.cells[1].textContent,
+                location: row.cells[2].textContent,
+                desc: row.cells[3].textContent
+            })).filter(ev => ev.date);
+            // Sort by date ascending
+            events.sort((a, b) => new Date(a.date) - new Date(b.date));
+            // Take next 4 events
+            const nextEvents = events; // show all
+            // Render
+            upcomingEventsList.innerHTML = nextEvents.map(ev => `
+                <div class="event-card bg-gradient-to-r from-blue-50 to-blue-100 rounded-lg p-4 border-l-4 border-blue-500 transition duration-300 mb-2">
+                    <div class="flex items-start">
+                        <div class="bg-blue-500 text-white p-2 rounded-lg mr-3 text-center min-w-12">
+                            <p class="font-bold text-lg">${ev.date ? new Date(ev.date).getDate().toString().padStart(2, '0') : ''}</p>
+                            <p class="text-xs">${ev.date ? new Date(ev.date).toLocaleString('default', { month: 'short' }).toUpperCase() : ''}</p>
+                    </div>
+                        <div>
+                            <h4 class="font-semibold">${ev.name}</h4>
+                            <p class="text-gray-600 text-sm mt-1">${ev.date ? new Date(ev.date).toLocaleDateString() : ''} - ${ev.location}</p>
+                            <div class="flex items-center mt-2 text-sm text-blue-600">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                <span>${ev.desc || ''}</span>
+                    </div>
+                </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+        // Call renderUpcomingEvents after any event add/edit/delete
+        function hookEventsTableUpdates() {
+            const table = document.getElementById('eventsTable');
+            if (!table) return;
+            // Observe changes to tbody
+            const observer = new MutationObserver(renderUpcomingEvents);
+            observer.observe(table.querySelector('tbody'), { childList: true, subtree: false });
+        }
+        // Also call after event form submit
+        document.getElementById('eventForm').addEventListener('submit', function() {
+            renderUpcomingEvents();
+        });
+        // Also call after edit/delete
+        document.getElementById('eventsTable').addEventListener('click', function(e) {
+            if (e.target && (e.target.classList.contains('edit-event-btn') || e.target.classList.contains('delete-event-btn'))) {
+                setTimeout(renderUpcomingEvents, 0);
+            }
+        });
+        // On page load, hook and render
+        window.addEventListener('DOMContentLoaded', function() {
+            hookEventsTableUpdates();
+            renderUpcomingEvents();
+        });
+
+        // Utility to update upcoming events count in dashboard
+        function updateUpcomingEventsCount() {
+            const table = document.getElementById('eventsTable');
+            const count = table ? table.querySelectorAll('tbody tr').length : 0;
+            document.getElementById('upcomingEventsCount').textContent = count;
+        }
+        // Call after any event add/delete
+        document.getElementById('eventForm').addEventListener('submit', function() {
+            updateUpcomingEventsCount();
+        });
+        document.getElementById('eventsTable').addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('delete-event-btn')) {
+                setTimeout(updateUpcomingEventsCount, 0);
+            }
+        });
+        window.addEventListener('DOMContentLoaded', function() {
+            updateUpcomingEventsCount();
+        });
+
+        // View Announcements button logic
+        document.getElementById('viewAnnouncementsBtn').addEventListener('click', function() {
+            const table = document.getElementById('eventsTable');
+            const rows = Array.from(table.querySelectorAll('tbody tr'));
+            if (rows.length === 0) {
+                alert('No announcements or events yet!');
+                return;
+            }
+            // Find the latest event (by date, descending)
+            const events = rows.map(row => ({
+                name: row.cells[0].textContent,
+                date: row.cells[1].textContent,
+                location: row.cells[2].textContent,
+                desc: row.cells[3].textContent
+            })).filter(ev => ev.date);
+            events.sort((a, b) => new Date(b.date) - new Date(a.date));
+            const latest = events[0];
+            alert(`Latest Announcement:\n\nEvent: ${latest.name}\nDate: ${latest.date}\nLocation: ${latest.location}\nDescription: ${latest.desc}`);
+        });
+
+        // BILLING MANAGEMENT LOGIC
+        let editingBillRow = null;
+        document.getElementById('addBillBtn').addEventListener('click', function() {
+            const form = document.getElementById('billForm');
+            form.reset();
+            editingBillRow = null;
+            form.classList.remove('hidden');
+            form.scrollIntoView({ behavior: 'smooth' });
+        });
+        document.getElementById('cancelBillBtn').addEventListener('click', function() {
+            document.getElementById('billForm').classList.add('hidden');
+            editingBillRow = null;
+        });
+        document.getElementById('billForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+            const form = e.target;
+            const resident = form.billResident.value;
+            const amount = form.billAmount.value;
+            const dueDate = form.billDueDate.value;
+            const status = form.billStatus.value;
+            const table = document.getElementById('billsTable').querySelector('tbody');
+            if (editingBillRow) {
+                // Update existing row
+                editingBillRow.cells[0].textContent = resident;
+                editingBillRow.cells[1].textContent = amount;
+                editingBillRow.cells[2].textContent = dueDate;
+                editingBillRow.cells[3].textContent = status;
+                editingBillRow = null;
+            } else {
+                // Add new row
+                const newRow = table.insertRow();
+                newRow.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${resident}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${amount}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${dueDate}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${status}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-bill-btn">Edit</button>
+                        <button class="text-red-600 hover:text-red-900 delete-bill-btn">Delete</button>
+                    </td>`;
+            }
+            form.reset();
+            form.classList.add('hidden');
+        });
+        document.getElementById('billsTable').addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('edit-bill-btn')) {
+                const row = e.target.closest('tr');
+                const form = document.getElementById('billForm');
+                form.billResident.value = row.cells[0].textContent;
+                form.billAmount.value = row.cells[1].textContent;
+                form.billDueDate.value = row.cells[2].textContent;
+                form.billStatus.value = row.cells[3].textContent;
+                editingBillRow = row;
+                form.classList.remove('hidden');
+                form.scrollIntoView({ behavior: 'smooth' });
+            }
+            if (e.target && e.target.classList.contains('delete-bill-btn')) {
+                const row = e.target.closest('tr');
+                if (confirm('Are you sure you want to delete this bill?')) {
+                    row.remove();
+                }
+            }
+        });
+
+        // COMPLAINTS MANAGEMENT LOGIC
+        let editingComplaintRow = null;
+        document.getElementById('addComplaintBtn').addEventListener('click', function() {
+            const form = document.getElementById('complaintForm');
+            form.reset();
+            editingComplaintRow = null;
+            form.classList.remove('hidden');
+            form.scrollIntoView({ behavior: 'smooth' });
+        });
+        document.getElementById('cancelComplaintBtn').addEventListener('click', function() {
+            document.getElementById('complaintForm').classList.add('hidden');
+            editingComplaintRow = null;
+        });
+        document.getElementById('complaintForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const resident = form.complaintResident.value;
+            const subject = form.complaintSubject.value;
+            const date = form.complaintDate.value;
+            const status = form.complaintStatus.value;
+            const table = document.getElementById('complaintsTable').querySelector('tbody');
+            if (editingComplaintRow) {
+                // Update existing row
+                editingComplaintRow.cells[0].textContent = resident;
+                editingComplaintRow.cells[1].textContent = subject;
+                editingComplaintRow.cells[2].textContent = date;
+                editingComplaintRow.cells[3].textContent = status;
+                editingComplaintRow = null;
+            } else {
+                // Add new row
+                const newRow = table.insertRow();
+                newRow.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${resident}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${subject}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${status}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-complaint-btn">Edit</button>
+                        <button class="text-red-600 hover:text-red-900 delete-complaint-btn">Delete</button>
+                    </td>`;
+            }
+            form.reset();
+            form.classList.add('hidden');
+            setTimeout(updatePendingComplaintsCount, 0);
+        });
+        document.getElementById('complaintsTable').addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('edit-complaint-btn')) {
+                const row = e.target.closest('tr');
+                const form = document.getElementById('complaintForm');
+                form.complaintResident.value = row.cells[0].textContent;
+                form.complaintSubject.value = row.cells[1].textContent;
+                form.complaintDate.value = row.cells[2].textContent;
+                form.complaintStatus.value = row.cells[3].textContent;
+                editingComplaintRow = row;
+                form.classList.remove('hidden');
+                form.scrollIntoView({ behavior: 'smooth' });
+            }
+            if (e.target && e.target.classList.contains('delete-complaint-btn')) {
+                const row = e.target.closest('tr');
+                if (confirm('Are you sure you want to delete this complaint?')) {
+                    row.remove();
+                    setTimeout(updatePendingComplaintsCount, 0);
+                }
+            }
+            // Also update on status change if status is editable inline
+            if (e.target && e.target.tagName === 'SELECT' && e.target.name === 'complaintStatus') {
+                setTimeout(updatePendingComplaintsCount, 0);
+            }
+        });
+        // If you add a Delete All Complaints button, call updatePendingComplaintsCount after deleting all
+        window.addEventListener('DOMContentLoaded', function() {
+            updatePendingComplaintsCount();
+        });
+
+        // MAINTENANCE MANAGEMENT LOGIC
+        let editingMaintenanceRow = null;
+        document.getElementById('addMaintenanceBtn').addEventListener('click', function() {
+            const form = document.getElementById('maintenanceForm');
+            form.reset();
+            editingMaintenanceRow = null;
+            form.classList.remove('hidden');
+            form.scrollIntoView({ behavior: 'smooth' });
+        });
+        document.getElementById('cancelMaintenanceBtn').addEventListener('click', function() {
+            document.getElementById('maintenanceForm').classList.add('hidden');
+            editingMaintenanceRow = null;
+        });
+        document.getElementById('maintenanceForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const title = form.maintenanceTitle.value;
+            const desc = form.maintenanceDesc.value;
+            const date = form.maintenanceDate.value;
+            const status = form.maintenanceStatus.value;
+            const table = document.getElementById('maintenanceTable').querySelector('tbody');
+            if (editingMaintenanceRow) {
+                // Update existing row
+                editingMaintenanceRow.cells[0].textContent = title;
+                editingMaintenanceRow.cells[1].textContent = desc;
+                editingMaintenanceRow.cells[2].textContent = date;
+                editingMaintenanceRow.cells[3].textContent = status;
+                editingMaintenanceRow = null;
+            } else {
+                // Add new row
+                const newRow = table.insertRow();
+                newRow.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${title}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${desc}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${status}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-maintenance-btn">Edit</button>
+                        <button class="text-red-600 hover:text-red-900 delete-maintenance-btn">Delete</button>
+                    </td>`;
+            }
+            form.reset();
+            form.classList.add('hidden');
+        });
+        document.getElementById('maintenanceTable').addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('edit-maintenance-btn')) {
+                const row = e.target.closest('tr');
+                const form = document.getElementById('maintenanceForm');
+                form.maintenanceTitle.value = row.cells[0].textContent;
+                form.maintenanceDesc.value = row.cells[1].textContent;
+                form.maintenanceDate.value = row.cells[2].textContent;
+                form.maintenanceStatus.value = row.cells[3].textContent;
+                editingMaintenanceRow = row;
+                form.classList.remove('hidden');
+                form.scrollIntoView({ behavior: 'smooth' });
+            }
+            if (e.target && e.target.classList.contains('delete-maintenance-btn')) {
+                const row = e.target.closest('tr');
+                if (confirm('Are you sure you want to delete this task?')) {
+                    row.remove();
+                }
+            }
+        });
+
+        window.addEventListener('DOMContentLoaded', function() {
+            updateResidentsCount();
+        });
+
+        // Utility to update families and singles count in dashboard
+        function updateFamiliesSinglesCount() {
+            const table = document.getElementById('residentsTable');
+            let families = 0, singles = 0;
+            if (table) {
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const typeCell = row.cells[2];
+                    if (typeCell) {
+                        const typeText = typeCell.textContent.trim().toLowerCase();
+                        if (typeText.includes('family')) families++;
+                        else if (typeText.includes('single')) singles++;
+                    }
+                });
+            }
+            document.getElementById('dashboardFamiliesCount').innerHTML = `<i class="fas fa-home mr-1"></i> ${families} Families`;
+            document.getElementById('dashboardSinglesCount').innerHTML = `<i class="fas fa-user mr-1"></i> ${singles} Singles`;
+        }
+        // Update on residents add/edit/delete
+        function updateResidentsAndTypes() {
+            updateResidentsCount();
+            updateFamiliesSinglesCount();
+        }
+        document.getElementById('residentForm').addEventListener('submit', function() {
+            updateResidentsAndTypes();
+        });
+        document.getElementById('residentsTable').addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('delete-resident-btn')) {
+                setTimeout(updateResidentsAndTypes, 0);
+            }
+        });
+        document.getElementById('deleteAllResidentsBtn').addEventListener('click', function() {
+            setTimeout(updateResidentsAndTypes, 0);
+        });
+        window.addEventListener('DOMContentLoaded', function() {
+            updateResidentsAndTypes();
+        });
+
+        // Track complaints added in the current session
+        let sessionNewComplaints = [];
+        // Utility to update new complaints today in dashboard (date-based)
+        function updateNewComplaintsToday() {
+            const table = document.getElementById('complaintsTable');
+            let count = 0;
+            const today = new Date().toISOString().slice(0, 10);
+            if (table) {
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    if (row.cells[2] && row.cells[2].textContent.trim() === today) count++;
+                });
+            }
+            const newTodayElem = document.getElementById('dashboardNewComplaintsToday');
+            if (newTodayElem) {
+                if (count > 0) {
+                    newTodayElem.innerHTML = `<i class='fas fa-arrow-up mr-1'></i> ${count} new today`;
+                    newTodayElem.style.display = '';
+                } else {
+                    newTodayElem.style.display = 'none';
+                }
+            }
+        }
+        // Update on complaints add/edit/delete
+        function updateComplaintsDashboard() {
+            updatePendingComplaintsCount();
+            updateNewComplaintsToday();
+        }
+        document.getElementById('complaintForm').addEventListener('submit', function() {
+            setTimeout(updateComplaintsDashboard, 0);
+        });
+        document.getElementById('complaintsTable').addEventListener('click', function(e) {
+            if (e.target && (e.target.classList.contains('delete-complaint-btn') || e.target.classList.contains('edit-complaint-btn') || (e.target.tagName === 'SELECT' && e.target.name === 'complaintStatus'))) {
+                setTimeout(updateComplaintsDashboard, 0);
+            }
+        });
+        window.addEventListener('DOMContentLoaded', function() {
+            updateComplaintsDashboard();
+        });
+
+        // Utility to update maintenance due amount in dashboard
+        function updateMaintenanceDue() {
+            const table = document.getElementById('billsTable');
+            let total = 0;
+            if (table) {
+                const rows = table.querySelectorAll('tbody tr');
+                rows.forEach(row => {
+                    const amountCell = row.cells[1];
+                    const statusCell = row.cells[3];
+                    if (amountCell && statusCell && statusCell.textContent.trim() === 'Pending') {
+                        const amt = parseFloat(amountCell.textContent.replace(/[^\d.]/g, ''));
+                        if (!isNaN(amt)) total += amt;
+                    }
+                });
+            }
+            document.getElementById('dashboardMaintenanceDue').textContent = `₹${total.toLocaleString('en-IN')}`;
+        }
+        // Update on bills add/edit/delete
+        function updateBillsDashboard() {
+            updateMaintenanceDue();
+        }
+        document.getElementById('billForm').addEventListener('submit', function() {
+            setTimeout(updateBillsDashboard, 0);
+        });
+        document.getElementById('billsTable').addEventListener('click', function(e) {
+            if (e.target && (e.target.classList.contains('delete-bill-btn') || e.target.classList.contains('edit-bill-btn') || (e.target.tagName === 'SELECT' && e.target.name === 'billStatus'))) {
+                setTimeout(updateBillsDashboard, 0);
+            }
+        });
+        window.addEventListener('DOMContentLoaded', function() {
+            updateBillsDashboard();
+        });
+
+        // Show visitors section
+        function showVisitorsSection() {
+            const visitorsSection = document.getElementById('visitors');
+            const billingSection = document.getElementById('billing');
+            const eventsSection = document.getElementById('events');
+            const residentsSection = document.getElementById('residents');
+            const mainContent = document.querySelector('main');
+            const complaintsSection = document.getElementById('complaints');
+            const maintenanceSection = document.getElementById('maintenance');
+            visitorsSection.classList.remove('hidden');
+            billingSection.classList.add('hidden');
+            eventsSection.classList.add('hidden');
+            residentsSection.classList.add('hidden');
+            mainContent.classList.add('hidden');
+            if (complaintsSection) complaintsSection.classList.add('hidden');
+            if (maintenanceSection) maintenanceSection.classList.add('hidden');
+            // Hide visitors section on all other tab switches
+            document.getElementById('dashboardLink').addEventListener('click', function() { visitorsSection.classList.add('hidden'); });
+            document.getElementById('residentsLink').addEventListener('click', function() { visitorsSection.classList.add('hidden'); });
+            document.getElementById('eventsLink').addEventListener('click', function() { visitorsSection.classList.add('hidden'); });
+            document.getElementById('billingLink').addEventListener('click', function() { visitorsSection.classList.add('hidden'); });
+            document.getElementById('complaintsLink').addEventListener('click', function() { visitorsSection.classList.add('hidden'); });
+            document.getElementById('maintenanceLink').addEventListener('click', function() { visitorsSection.classList.add('hidden'); });
+            window.scrollTo(0, 0);
+            setActiveTab('visitorsLink');
+        }
+        // Add event listener for Visitors tab
+        document.getElementById('visitorsLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            showVisitorsSection();
+        });
+
+        // VISITORS MANAGEMENT LOGIC
+        let editingVisitorRow = null;
+        document.getElementById('addVisitorBtn').addEventListener('click', function() {
+            const form = document.getElementById('visitorForm');
+            form.reset();
+            editingVisitorRow = null;
+            form.classList.remove('hidden');
+            form.scrollIntoView({ behavior: 'smooth' });
+        });
+        document.getElementById('cancelVisitorBtn').addEventListener('click', function() {
+            document.getElementById('visitorForm').classList.add('hidden');
+            editingVisitorRow = null;
+        });
+        document.getElementById('visitorForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const name = form.visitorName.value;
+            const apartment = form.visitorApartment.value;
+            const date = form.visitorDate.value;
+            const timeIn = form.visitorTimeIn.value;
+            const timeOut = form.visitorTimeOut.value;
+            const purpose = form.visitorPurpose.value;
+            const approver = form.visitorApprover.value;
+            // Approver validation
+            const approverInput = form.visitorApprover;
+            if (!approver.trim()) {
+                approverInput.classList.add('border-red-500', 'ring-2', 'ring-red-400');
+                approverInput.focus();
+                alert('Approver is required.');
+                return;
+            } else {
+                approverInput.classList.remove('border-red-500', 'ring-2', 'ring-red-400');
+            }
+            const table = document.getElementById('visitorsTable').querySelector('tbody');
+            if (editingVisitorRow) {
+                // Update existing row
+                editingVisitorRow.cells[0].textContent = name;
+                editingVisitorRow.cells[1].textContent = apartment;
+                editingVisitorRow.cells[2].textContent = date;
+                editingVisitorRow.cells[3].textContent = timeIn;
+                editingVisitorRow.cells[4].textContent = timeOut;
+                editingVisitorRow.cells[5].textContent = purpose;
+                editingVisitorRow.cells[6].textContent = approver;
+                editingVisitorRow = null;
+            } else {
+                // Add new row
+                const newRow = table.insertRow();
+                newRow.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${name}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${apartment}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${timeIn}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${timeOut}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${purpose}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${approver}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-visitor-btn">Edit</button>
+                        <button class="text-red-600 hover:text-red-900 delete-visitor-btn">Delete</button>
+                    </td>`;
+            }
+            form.reset();
+            form.classList.add('hidden');
+        });
+        document.getElementById('visitorsTable').addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('edit-visitor-btn')) {
+                const row = e.target.closest('tr');
+                const form = document.getElementById('visitorForm');
+                form.visitorName.value = row.cells[0].textContent;
+                form.visitorApartment.value = row.cells[1].textContent;
+                form.visitorDate.value = row.cells[2].textContent;
+                form.visitorTimeIn.value = row.cells[3].textContent;
+                form.visitorTimeOut.value = row.cells[4].textContent;
+                form.visitorPurpose.value = row.cells[5].textContent;
+                form.visitorApprover.value = row.cells[6].textContent;
+                editingVisitorRow = row;
+                form.classList.remove('hidden');
+                form.scrollIntoView({ behavior: 'smooth' });
+            }
+            if (e.target && e.target.classList.contains('delete-visitor-btn')) {
+                const row = e.target.closest('tr');
+                if (confirm('Are you sure you want to delete this visitor?')) {
+                    row.remove();
+                }
+            }
+        });
+
+        // Utility to update visitors count in dashboard
+        function updateVisitorsCount() {
+            const table = document.getElementById('visitorsTable');
+            const count = table ? table.querySelectorAll('tbody tr').length : 0;
+            document.getElementById('dashboardVisitorsCount').textContent = count;
+        }
+        // Update on visitors add/edit/delete
+        document.getElementById('visitorForm').addEventListener('submit', function() {
+            setTimeout(updateVisitorsCount, 0);
+        });
+        document.getElementById('visitorsTable').addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('delete-visitor-btn')) {
+                setTimeout(updateVisitorsCount, 0);
+            }
+        });
+        window.addEventListener('DOMContentLoaded', function() {
+            updateVisitorsCount();
+        });
+
+        // Show notifications section
+        function showNotificationsSection() {
+            const notificationsSection = document.getElementById('notifications');
+            const billingSection = document.getElementById('billing');
+            const eventsSection = document.getElementById('events');
+            const residentsSection = document.getElementById('residents');
+            const mainContent = document.querySelector('main');
+            const complaintsSection = document.getElementById('complaints');
+            const maintenanceSection = document.getElementById('maintenance');
+            const visitorsSection = document.getElementById('visitors');
+            notificationsSection.classList.remove('hidden');
+            billingSection.classList.add('hidden');
+            eventsSection.classList.add('hidden');
+            residentsSection.classList.add('hidden');
+            mainContent.classList.add('hidden');
+            if (complaintsSection) complaintsSection.classList.add('hidden');
+            if (maintenanceSection) maintenanceSection.classList.add('hidden');
+            if (visitorsSection) visitorsSection.classList.add('hidden');
+            window.scrollTo(0, 0);
+            setActiveTab('notificationsLink');
+        }
+        // Add event listener for Notifications tab
+        document.getElementById('notificationsLink').addEventListener('click', function(e) {
+            e.preventDefault();
+            showNotificationsSection();
+        });
+
+        // NOTIFICATIONS MANAGEMENT LOGIC
+        let editingNotificationRow = null;
+        document.getElementById('addNotificationBtn').addEventListener('click', function() {
+            const form = document.getElementById('notificationForm');
+            form.reset();
+            editingNotificationRow = null;
+            form.classList.remove('hidden');
+            form.scrollIntoView({ behavior: 'smooth' });
+        });
+        document.getElementById('cancelNotificationBtn').addEventListener('click', function() {
+            document.getElementById('notificationForm').classList.add('hidden');
+            editingNotificationRow = null;
+        });
+        document.getElementById('notificationForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const form = e.target;
+            const date = form.notificationDate.value;
+            const type = form.notificationType.value;
+            const message = form.notificationMessage.value;
+            const table = document.getElementById('notificationsTable').querySelector('tbody');
+            if (editingNotificationRow) {
+                // Update existing row
+                editingNotificationRow.cells[0].textContent = date;
+                editingNotificationRow.cells[1].textContent = type;
+                editingNotificationRow.cells[2].textContent = message;
+                editingNotificationRow = null;
+            } else {
+                // Add new row
+                const newRow = table.insertRow();
+                newRow.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap">${date}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${type}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">${message}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-notification-btn">Edit</button>
+                        <button class="text-red-600 hover:text-red-900 delete-notification-btn">Delete</button>
+                    </td>`;
+            }
+            form.reset();
+            form.classList.add('hidden');
+        });
+        document.getElementById('notificationsTable').addEventListener('click', function(e) {
+            if (e.target && e.target.classList.contains('edit-notification-btn')) {
+                const row = e.target.closest('tr');
+                const form = document.getElementById('notificationForm');
+                form.notificationDate.value = row.cells[0].textContent;
+                form.notificationType.value = row.cells[1].textContent;
+                form.notificationMessage.value = row.cells[2].textContent;
+                editingNotificationRow = row;
+                form.classList.remove('hidden');
+                form.scrollIntoView({ behavior: 'smooth' });
+            }
+            if (e.target && e.target.classList.contains('delete-notification-btn')) {
+                const row = e.target.closest('tr');
+                if (confirm('Are you sure you want to delete this notification?')) {
+                    row.remove();
+                }
+            }
+        });
+
+        // Make bell icon open notifications section
+        document.querySelectorAll('.fa-bell').forEach(bell => {
+            bell.addEventListener('click', function(e) {
+                e.preventDefault();
+                showNotificationsSection();
+                updateNotificationBadge(); // <-- Add this line
+            });
+        });
+
+        function updateNotificationBadge() {
+            const table = document.getElementById('notificationsTable');
+            const count = table ? table.querySelectorAll('tbody tr').length : 0;
+            document.getElementById('notificationBadge').textContent = count;
+        }
+
+        // Utility to update notification badge count
+        function updateNotificationBadge() {
+            const table = document.getElementById('notificationsTable');
+            const count = table ? table.querySelectorAll('tbody tr').length : 0;
+            document.getElementById('notificationBadge').textContent = count;
+        }
+        // Update on notifications add/edit/delete
+        document.getElementById('notificationForm').addEventListener('submit', function() {
+            setTimeout(updateNotificationBadge, 0);
+        });
+        document.getElementById('notificationsTable').addEventListener('click', function(e) {
+            if (e.target && (e.target.classList.contains('delete-notification-btn') || e.target.classList.contains('edit-notification-btn'))) {
+                setTimeout(updateNotificationBadge, 0);
+            }
+        });
+        window.addEventListener('DOMContentLoaded', function() {
+            updateNotificationBadge();
+        });
+
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - 🧬 <a href="https://enzostvs-deepsite.hf.space?remix=sap1503/kutrefortune" style="color: #fff;text-decoration: underline;" target="_blank" >Remix</a></p></body>
+</html>
