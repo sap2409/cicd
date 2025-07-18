@@ -59,7 +59,7 @@
                 <button class="md:hidden lg:hidden text-white">
                     <i class="fas fa-home text-2xl"></i>
                 </button>
-                <button class="text-white md:hidden lg:block opacity-50 cursor-not-allowed" id="sidebarToggle" disabled>
+                <button class="text-white md:hidden lg:block" id="sidebarToggle">
                     <i class="fas fa-bars"></i>
                 </button>
             </div>
@@ -229,7 +229,7 @@
                             <div>
                                 <p class="text-gray-500">Maintenance Due</p>
                                 <h3 class="text-2xl font-bold mt-1" id="dashboardMaintenanceDue">₹0</h3>
-                                <p class="text-yellow-500 text-sm mt-2">Due by 15th June</p>
+                                <p class="text-yellow-500 text-sm mt-2" id="maintenanceDueDate">Due by 15th June</p>
                             </div>
                             <div class="bg-yellow-100 p-3 rounded-full">
                                 <i class="fas fa-file-invoice-dollar text-yellow-600 text-xl"></i>
@@ -852,28 +852,32 @@
             const billingSection = document.getElementById('billing');
             const eventsSection = document.getElementById('events');
             const maintenanceSection = document.getElementById('maintenance');
+            const notificationsSection = document.getElementById('notifications');
+            const visitorsSection = document.getElementById('visitors');
             residentsSection.classList.remove('hidden');
             mainContent.classList.add('hidden');
             if (billingSection) billingSection.classList.add('hidden');
             if (eventsSection) eventsSection.classList.add('hidden');
             if (maintenanceSection) maintenanceSection.classList.add('hidden');
+            if (notificationsSection) notificationsSection.classList.add('hidden');
+            if (visitorsSection) visitorsSection.classList.add('hidden');
             window.scrollTo(0, 0);
-            // Reset form when showing residents section
             resetForm();
-            // Update sidebar active state
             setActiveTab('residentsLink');
+            loadResidentsFromBackend();
         }
 
         // Show dashboard section
         function showDashboardSection() {
             const residentsSection = document.getElementById('residents');
             const mainContent = document.querySelector('main');
-            
+            const notificationsSection = document.getElementById('notifications');
+            const visitorsSection = document.getElementById('visitors');
             residentsSection.classList.add('hidden');
             mainContent.classList.remove('hidden');
+            if (notificationsSection) notificationsSection.classList.add('hidden');
+            if (visitorsSection) visitorsSection.classList.add('hidden');
             window.scrollTo(0, 0);
-
-            // Update sidebar active state
             setActiveTab('dashboardLink');
         }
 
@@ -885,12 +889,14 @@
             const billingSection = document.getElementById('billing');
             const maintenanceSection = document.getElementById('maintenance');
             const notificationsSection = document.getElementById('notifications');
+            const visitorsSection = document.getElementById('visitors');
             eventsSection.classList.remove('hidden');
             residentsSection.classList.add('hidden');
             mainContent.classList.add('hidden');
             if (billingSection) billingSection.classList.add('hidden');
             if (maintenanceSection) maintenanceSection.classList.add('hidden');
             if (notificationsSection) notificationsSection.classList.add('hidden');
+            if (visitorsSection) visitorsSection.classList.add('hidden');
             window.scrollTo(0, 0);
             setActiveTab('eventsLink');
         }
@@ -903,12 +909,16 @@
             const mainContent = document.querySelector('main');
             const complaintsSection = document.getElementById('complaints');
             const maintenanceSection = document.getElementById('maintenance');
+            const notificationsSection = document.getElementById('notifications');
+            const visitorsSection = document.getElementById('visitors');
             billingSection.classList.remove('hidden');
             eventsSection.classList.add('hidden');
             residentsSection.classList.add('hidden');
             mainContent.classList.add('hidden');
             if (complaintsSection) complaintsSection.classList.add('hidden');
             if (maintenanceSection) maintenanceSection.classList.add('hidden');
+            if (notificationsSection) notificationsSection.classList.add('hidden');
+            if (visitorsSection) visitorsSection.classList.add('hidden');
             window.scrollTo(0, 0);
             setActiveTab('billingLink');
         }
@@ -921,12 +931,16 @@
             const residentsSection = document.getElementById('residents');
             const mainContent = document.querySelector('main');
             const maintenanceSection = document.getElementById('maintenance');
+            const notificationsSection = document.getElementById('notifications');
+            const visitorsSection = document.getElementById('visitors');
             complaintsSection.classList.remove('hidden');
             billingSection.classList.add('hidden');
             eventsSection.classList.add('hidden');
             residentsSection.classList.add('hidden');
             mainContent.classList.add('hidden');
             if (maintenanceSection) maintenanceSection.classList.add('hidden');
+            if (notificationsSection) notificationsSection.classList.add('hidden');
+            if (visitorsSection) visitorsSection.classList.add('hidden');
             window.scrollTo(0, 0);
             setActiveTab('complaintsLink');
         }
@@ -968,14 +982,19 @@
             const eventsSection = document.getElementById('events');
             const residentsSection = document.getElementById('residents');
             const mainContent = document.querySelector('main');
+            const notificationsSection = document.getElementById('notifications');
+            const visitorsSection = document.getElementById('visitors');
             maintenanceSection.classList.remove('hidden');
-            complaintsSection.classList.add('hidden');
-            billingSection.classList.add('hidden');
-            eventsSection.classList.add('hidden');
-            residentsSection.classList.add('hidden');
-            mainContent.classList.add('hidden');
+            if (complaintsSection) complaintsSection.classList.add('hidden');
+            if (billingSection) billingSection.classList.add('hidden');
+            if (eventsSection) eventsSection.classList.add('hidden');
+            if (residentsSection) residentsSection.classList.add('hidden');
+            if (mainContent) mainContent.classList.add('hidden');
+            if (notificationsSection) notificationsSection.classList.add('hidden');
+            if (visitorsSection) visitorsSection.classList.add('hidden');
             window.scrollTo(0, 0);
             setActiveTab('maintenanceLink');
+            loadMaintenanceFromBackend();
         }
         // Add event listener for Maintenance tab
         document.getElementById('maintenanceLink').addEventListener('click', function(e) {
@@ -1066,6 +1085,8 @@
                 e.preventDefault();
                 showMaintenanceSection();
             });
+            loadResidentsFromBackend();
+            loadEventsFromBackend();
         });
 
         function setActiveTab(tabId) {
@@ -1123,8 +1144,33 @@
                 let row = btn.closest('tr');
                 if (row) {
                     if (confirm('Are you sure you want to delete this resident?')) {
-                        row.parentNode.removeChild(row);
-                        setTimeout(updateResidentsCount, 0);
+                        // Get the resident's name and flat from the row
+                        const name = row.cells[0].textContent;
+                        const flat = row.cells[1].textContent;
+                        // Find the resident in the backend data to get the id
+                        fetch('http://localhost:3001/api/residents')
+                            .then(response => response.json())
+                            .then(residents => {
+                                const resident = residents.find(r => r.name === name && r.flat === flat);
+                                if (resident) {
+                                    fetch(`http://localhost:3001/api/residents/${resident.id}`, {
+                                        method: 'DELETE'
+                                    })
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        if (data.success) {
+                                            loadResidentsFromBackend(); // Refresh the list
+                                        } else {
+                                            alert('Failed to delete resident from backend.');
+                                        }
+                                    })
+                                    .catch(error => {
+                                        alert('Error deleting resident: ' + error);
+                                    });
+                                } else {
+                                    alert('Resident not found in backend.');
+                                }
+                            });
                     }
                 } else {
                     alert('Could not find the row to delete.');
@@ -1141,33 +1187,38 @@
             const contact = form.contact.value;
             const email = form.email.value;
             const notes = form.notes.value;
-            const table = document.getElementById('residentsTable').querySelector('tbody');
-            // If editing, update row
-            if (form.dataset.editingRow) {
-                const row = table.rows[form.dataset.editingRow - 1];
-                row.cells[0].textContent = name;
-                row.cells[1].textContent = apartment;
-                row.cells[2].innerHTML = `<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">${type.charAt(0).toUpperCase() + type.slice(1)}</span>`;
-                row.cells[3].textContent = contact;
-                // Remove editing state
-                delete form.dataset.editingRow;
-            } else {
-                // Add new row
-                const newRow = table.insertRow();
-                newRow.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap">${name}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${apartment}</td>
-                    <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">${type.charAt(0).toUpperCase() + type.slice(1)}</span></td>
-                    <td class="px-6 py-4 whitespace-nowrap">${contact}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-resident-btn">Edit</button>
-                        <button class="text-red-600 hover:text-red-900 delete-resident-btn">Delete</button>
-                    </td>`;
-            }
-            // Reset form and clear editing state
-            form.reset();
-            delete form.dataset.editingRow;
-            updateResidentsCount();
+
+            // --- Duplicate flat validation ---
+            fetch('http://localhost:3001/api/residents')
+                .then(response => response.json())
+                .then(residents => {
+                    const duplicate = residents.some(r => r.flat.trim().toLowerCase() === apartment.trim().toLowerCase());
+                    if (duplicate) {
+                        alert('A resident with this flat number already exists!');
+                        form.apartment.focus();
+                        return;
+                    }
+                    // --- ADD THIS: Send to backend ---
+                    fetch('http://localhost:3001/api/residents', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            name: name,
+                            flat: apartment,
+                            phone: contact,
+                            email: email
+                        })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        loadResidentsFromBackend(); // Refresh the list
+                        form.reset();
+                        alert('Resident saved to backend!');
+                    })
+                    .catch(error => {
+                        alert('Error saving resident: ' + error);
+                    });
+                });
         });
         // Update existing Edit/Delete buttons to use new classes
         document.querySelectorAll('.text-indigo-600').forEach(btn => {
@@ -1220,42 +1271,29 @@
             const date = form.eventDate.value;
             const location = form.eventLocation.value;
             const desc = form.eventDescription.value;
-            const table = document.getElementById('eventsTable').querySelector('tbody');
-            if (editingEventRow) {
-                // Update existing row
-                editingEventRow.cells[0].textContent = name;
-                editingEventRow.cells[1].textContent = date;
-                editingEventRow.cells[2].textContent = location;
-                editingEventRow.cells[3].textContent = desc;
-                editingEventRow = null;
-                // Add notification for event update
-                const notifTable = document.getElementById('notificationsTable').querySelector('tbody');
-                const today = new Date().toISOString().slice(0, 10);
-                const notifRow = notifTable.insertRow();
-                notifRow.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap">${today}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">Event Updated</td>
-                    <td class="px-6 py-4 whitespace-nowrap">Event '${name}' was updated.</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-notification-btn">Edit</button>
-                        <button class="text-red-600 hover:text-red-900 delete-notification-btn">Delete</button>
-                    </td>`;
-            } else {
-                // Add new row
-                const newRow = table.insertRow();
-                newRow.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap">${name}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${date}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${location}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${desc}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-event-btn">Edit</button>
-                        <button class="text-red-600 hover:text-red-900 delete-event-btn">Delete</button>
-                    </td>`;
-            }
-            form.reset();
-            form.classList.add('hidden');
-            renderUpcomingEvents(); // <-- Add this line
+
+            // Send to backend
+            fetch('http://localhost:3001/api/events', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: name,
+                    date: date,
+                    location: location,
+                    description: desc
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Event saved to backend!');
+                loadEventsFromBackend();
+                updateUpcomingEventsCountFromBackend();
+                form.reset();
+                form.classList.add('hidden');
+            })
+            .catch(error => {
+                alert('Error saving event: ' + error);
+            });
         });
         document.getElementById('eventsTable').addEventListener('click', function(e) {
             if (e.target && e.target.classList.contains('edit-event-btn')) {
@@ -1272,8 +1310,33 @@
             if (e.target && e.target.classList.contains('delete-event-btn')) {
                 const row = e.target.closest('tr');
                 if (confirm('Are you sure you want to delete this event?')) {
-                    row.remove();
-                    renderUpcomingEvents(); // <-- Add this line
+                    // Get the event's name and date from the row
+                    const name = row.cells[0].textContent;
+                    const date = row.cells[1].textContent;
+                    // Find the event in the backend data to get the id
+                    fetch('http://localhost:3001/api/events')
+                        .then(response => response.json())
+                        .then(events => {
+                            const event = events.find(ev => ev.name === name && ev.date === date);
+                            if (event) {
+                                fetch(`http://localhost:3001/api/events/${event.id}`, {
+                                    method: 'DELETE'
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        loadEventsFromBackend(); // Refresh the list
+                                    } else {
+                                        alert('Failed to delete event from backend.');
+                                    }
+                                })
+                                .catch(error => {
+                                    alert('Error deleting event: ' + error);
+                                });
+                            } else {
+                                alert('Event not found in backend.');
+                            }
+                        });
                 }
             }
         });
@@ -1398,29 +1461,29 @@
             const amount = form.billAmount.value;
             const dueDate = form.billDueDate.value;
             const status = form.billStatus.value;
-            const table = document.getElementById('billsTable').querySelector('tbody');
-            if (editingBillRow) {
-                // Update existing row
-                editingBillRow.cells[0].textContent = resident;
-                editingBillRow.cells[1].textContent = amount;
-                editingBillRow.cells[2].textContent = dueDate;
-                editingBillRow.cells[3].textContent = status;
-                editingBillRow = null;
-            } else {
-                // Add new row
-                const newRow = table.insertRow();
-                newRow.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap">${resident}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${amount}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${dueDate}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${status}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-bill-btn">Edit</button>
-                        <button class="text-red-600 hover:text-red-900 delete-bill-btn">Delete</button>
-                    </td>`;
-            }
-            form.reset();
-            form.classList.add('hidden');
+
+            fetch('http://localhost:3001/api/bills', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    resident: resident,
+                    amount: amount,
+                    dueDate: dueDate,
+                    status: status
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Bill saved to backend!');
+                loadBillsFromBackend();
+                updatePaymentChartFromBackend();
+                updateMaintenanceDueFromBackend();
+                form.reset();
+                form.classList.add('hidden');
+            })
+            .catch(error => {
+                alert('Error saving bill: ' + error);
+            });
         });
         document.getElementById('billsTable').addEventListener('click', function(e) {
             if (e.target && e.target.classList.contains('edit-bill-btn')) {
@@ -1437,7 +1500,40 @@
             if (e.target && e.target.classList.contains('delete-bill-btn')) {
                 const row = e.target.closest('tr');
                 if (confirm('Are you sure you want to delete this bill?')) {
-                    row.remove();
+                    // Get the bill's resident, amount, dueDate, and status from the row
+                    const resident = row.cells[0].textContent;
+                    const amount = row.cells[1].textContent;
+                    const dueDate = row.cells[2].textContent;
+                    const status = row.cells[3].textContent;
+                    // Find the bill in the backend data to get the id
+                    fetch('http://localhost:3001/api/bills')
+                        .then(response => response.json())
+                        .then(bills => {
+                            const bill = bills.find(b =>
+                                b.resident === resident &&
+                                b.amount == amount &&
+                                b.dueDate === dueDate &&
+                                b.status === status
+                            );
+                            if (bill) {
+                                fetch(`http://localhost:3001/api/bills/${bill.id}`, {
+                                    method: 'DELETE'
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        loadBillsFromBackend(); // Refresh the list
+                                    } else {
+                                        alert('Failed to delete bill from backend.');
+                                    }
+                                })
+                                .catch(error => {
+                                    alert('Error deleting bill: ' + error);
+                                });
+                            } else {
+                                alert('Bill not found in backend.');
+                            }
+                        });
                 }
             }
         });
@@ -1462,30 +1558,27 @@
             const subject = form.complaintSubject.value;
             const date = form.complaintDate.value;
             const status = form.complaintStatus.value;
-            const table = document.getElementById('complaintsTable').querySelector('tbody');
-            if (editingComplaintRow) {
-                // Update existing row
-                editingComplaintRow.cells[0].textContent = resident;
-                editingComplaintRow.cells[1].textContent = subject;
-                editingComplaintRow.cells[2].textContent = date;
-                editingComplaintRow.cells[3].textContent = status;
-                editingComplaintRow = null;
-            } else {
-                // Add new row
-                const newRow = table.insertRow();
-                newRow.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap">${resident}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${subject}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${date}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${status}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-complaint-btn">Edit</button>
-                        <button class="text-red-600 hover:text-red-900 delete-complaint-btn">Delete</button>
-                    </td>`;
-            }
-            form.reset();
-            form.classList.add('hidden');
-            setTimeout(updatePendingComplaintsCount, 0);
+
+            fetch('http://localhost:3001/api/complaints', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    resident: resident,
+                    subject: subject,
+                    date: date,
+                    status: status
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                alert('Complaint saved to backend!');
+                loadComplaintsFromBackend(); // Refresh the list
+                form.reset();
+                form.classList.add('hidden');
+            })
+            .catch(error => {
+                alert('Error saving complaint: ' + error);
+            });
         });
         document.getElementById('complaintsTable').addEventListener('click', function(e) {
             if (e.target && e.target.classList.contains('edit-complaint-btn')) {
@@ -1502,13 +1595,41 @@
             if (e.target && e.target.classList.contains('delete-complaint-btn')) {
                 const row = e.target.closest('tr');
                 if (confirm('Are you sure you want to delete this complaint?')) {
-                    row.remove();
-                    setTimeout(updatePendingComplaintsCount, 0);
+                    // Get the complaint's resident, subject, date, and status from the row
+                    const resident = row.cells[0].textContent;
+                    const subject = row.cells[1].textContent;
+                    const date = row.cells[2].textContent;
+                    const status = row.cells[3].textContent;
+                    // Find the complaint in the backend data to get the id
+                    fetch('http://localhost:3001/api/complaints')
+                        .then(response => response.json())
+                        .then(complaints => {
+                            const complaint = complaints.find(c =>
+                                c.resident === resident &&
+                                c.subject === subject &&
+                                c.date === date &&
+                                c.status === status
+                            );
+                            if (complaint) {
+                                fetch(`http://localhost:3001/api/complaints/${complaint.id}`, {
+                                    method: 'DELETE'
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        loadComplaintsFromBackend(); // Refresh the list
+                                    } else {
+                                        alert('Failed to delete complaint from backend.');
+                                    }
+                                })
+                                .catch(error => {
+                                    alert('Error deleting complaint: ' + error);
+                                });
+                            } else {
+                                alert('Complaint not found in backend.');
+                            }
+                        });
                 }
-            }
-            // Also update on status change if status is editable inline
-            if (e.target && e.target.tagName === 'SELECT' && e.target.name === 'complaintStatus') {
-                setTimeout(updatePendingComplaintsCount, 0);
             }
         });
         // If you add a Delete All Complaints button, call updatePendingComplaintsCount after deleting all
@@ -1517,68 +1638,92 @@
         });
 
         // MAINTENANCE MANAGEMENT LOGIC
-        let editingMaintenanceRow = null;
-        document.getElementById('addMaintenanceBtn').addEventListener('click', function() {
-            const form = document.getElementById('maintenanceForm');
-            form.reset();
-            editingMaintenanceRow = null;
-            form.classList.remove('hidden');
-            form.scrollIntoView({ behavior: 'smooth' });
-        });
-        document.getElementById('cancelMaintenanceBtn').addEventListener('click', function() {
-            document.getElementById('maintenanceForm').classList.add('hidden');
-            editingMaintenanceRow = null;
-        });
-        document.getElementById('maintenanceForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const form = e.target;
-            const title = form.maintenanceTitle.value;
-            const desc = form.maintenanceDesc.value;
-            const date = form.maintenanceDate.value;
-            const status = form.maintenanceStatus.value;
-            const table = document.getElementById('maintenanceTable').querySelector('tbody');
-            if (editingMaintenanceRow) {
-                // Update existing row
-                editingMaintenanceRow.cells[0].textContent = title;
-                editingMaintenanceRow.cells[1].textContent = desc;
-                editingMaintenanceRow.cells[2].textContent = date;
-                editingMaintenanceRow.cells[3].textContent = status;
-                editingMaintenanceRow = null;
-            } else {
-                // Add new row
-                const newRow = table.insertRow();
-                newRow.innerHTML = `
-                    <td class="px-6 py-4 whitespace-nowrap">${title}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${desc}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${date}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">${status}</td>
-                    <td class="px-6 py-4 whitespace-nowrap">
-                        <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-maintenance-btn">Edit</button>
-                        <button class="text-red-600 hover:text-red-900 delete-maintenance-btn">Delete</button>
-                    </td>`;
-            }
-            form.reset();
-            form.classList.add('hidden');
-        });
-        document.getElementById('maintenanceTable').addEventListener('click', function(e) {
-            if (e.target && e.target.classList.contains('edit-maintenance-btn')) {
+        let editingMaintenanceId = null;
+        const maintenanceForm = document.getElementById('maintenanceForm');
+        if (maintenanceForm) {
+            // Add Task button
+            document.getElementById('addMaintenanceBtn').addEventListener('click', function() {
+                maintenanceForm.reset();
+                editingMaintenanceId = null;
+                maintenanceForm.classList.remove('hidden');
+                maintenanceForm.scrollIntoView({ behavior: 'smooth' });
+            });
+            // Cancel button
+            document.getElementById('cancelMaintenanceBtn').addEventListener('click', function() {
+                maintenanceForm.classList.add('hidden');
+                editingMaintenanceId = null;
+            });
+            // Submit handler
+            maintenanceForm.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const form = e.target;
+                const title = form.maintenanceTitle.value;
+                const description = form.maintenanceDesc.value;
+                const date = form.maintenanceDate.value;
+                const status = form.maintenanceStatus.value;
+                // If editing, send PUT, else POST
+                const method = editingMaintenanceId ? 'PUT' : 'POST';
+                const url = editingMaintenanceId
+                    ? `http://localhost:3001/api/maintenance/${editingMaintenanceId}`
+                    : 'http://localhost:3001/api/maintenance';
+                fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        title: title,
+                        description: description,
+                        date: date,
+                        status: status
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert('Maintenance task saved to backend!');
+                    loadMaintenanceFromBackend(); // Refresh the table
+                    form.reset();
+                    form.classList.add('hidden'); // Hide the form after saving
+                    editingMaintenanceId = null;
+                })
+                .catch(error => {
+                    alert('Error saving maintenance task: ' + error);
+                });
+            });
+        }
+        // Edit and delete buttons for maintenance
+        const maintenanceTable = document.getElementById('maintenanceTable');
+        if (maintenanceTable) {
+            maintenanceTable.addEventListener('click', function(e) {
                 const row = e.target.closest('tr');
-                const form = document.getElementById('maintenanceForm');
-                form.maintenanceTitle.value = row.cells[0].textContent;
-                form.maintenanceDesc.value = row.cells[1].textContent;
-                form.maintenanceDate.value = row.cells[2].textContent;
-                form.maintenanceStatus.value = row.cells[3].textContent;
-                editingMaintenanceRow = row;
-                form.classList.remove('hidden');
-                form.scrollIntoView({ behavior: 'smooth' });
-            }
-            if (e.target && e.target.classList.contains('delete-maintenance-btn')) {
-                const row = e.target.closest('tr');
-                if (confirm('Are you sure you want to delete this task?')) {
-                    row.remove();
+                if (!row) return;
+                const id = row.dataset.id;
+                if (e.target.classList.contains('edit-maintenance-btn')) {
+                    // Edit
+                    maintenanceForm.maintenanceTitle.value = row.cells[0].textContent;
+                    maintenanceForm.maintenanceDesc.value = row.cells[1].textContent;
+                    maintenanceForm.maintenanceDate.value = row.cells[2].textContent;
+                    maintenanceForm.maintenanceStatus.value = row.cells[3].textContent;
+                    editingMaintenanceId = id;
+                    maintenanceForm.classList.remove('hidden');
+                    maintenanceForm.scrollIntoView({ behavior: 'smooth' });
+                } else if (e.target.classList.contains('delete-maintenance-btn')) {
+                    // Delete
+                    if (confirm('Are you sure you want to delete this maintenance task?')) {
+                        fetch(`http://localhost:3001/api/maintenance/${id}`, { method: 'DELETE' })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                loadMaintenanceFromBackend(); // Refresh the table
+                            } else {
+                                alert('Failed to delete maintenance task from backend.');
+                            }
+                        })
+                        .catch(error => {
+                            alert('Error deleting maintenance task: ' + error);
+                        });
+                    }
                 }
-            }
-        });
+            });
+        }
 
         window.addEventListener('DOMContentLoaded', function() {
             updateResidentsCount();
@@ -1654,7 +1799,7 @@
             setTimeout(updateComplaintsDashboard, 0);
         });
         document.getElementById('complaintsTable').addEventListener('click', function(e) {
-            if (e.target && (e.target.classList.contains('delete-complaint-btn') || e.target.classList.contains('edit-complaint-btn') || (e.target.tagName === 'SELECT' && e.target.name === 'complaintStatus'))) {
+            if (e.target && (e.target.classList.contains('delete-complaint-btn') || e.target.classList.contains('edit-complaint-btn'))) {
                 setTimeout(updateComplaintsDashboard, 0);
             }
         });
@@ -1704,20 +1849,15 @@
             const mainContent = document.querySelector('main');
             const complaintsSection = document.getElementById('complaints');
             const maintenanceSection = document.getElementById('maintenance');
+            const notificationsSection = document.getElementById('notifications');
             visitorsSection.classList.remove('hidden');
-            billingSection.classList.add('hidden');
-            eventsSection.classList.add('hidden');
-            residentsSection.classList.add('hidden');
-            mainContent.classList.add('hidden');
+            if (billingSection) billingSection.classList.add('hidden');
+            if (eventsSection) eventsSection.classList.add('hidden');
+            if (residentsSection) residentsSection.classList.add('hidden');
+            if (mainContent) mainContent.classList.add('hidden');
             if (complaintsSection) complaintsSection.classList.add('hidden');
             if (maintenanceSection) maintenanceSection.classList.add('hidden');
-            // Hide visitors section on all other tab switches
-            document.getElementById('dashboardLink').addEventListener('click', function() { visitorsSection.classList.add('hidden'); });
-            document.getElementById('residentsLink').addEventListener('click', function() { visitorsSection.classList.add('hidden'); });
-            document.getElementById('eventsLink').addEventListener('click', function() { visitorsSection.classList.add('hidden'); });
-            document.getElementById('billingLink').addEventListener('click', function() { visitorsSection.classList.add('hidden'); });
-            document.getElementById('complaintsLink').addEventListener('click', function() { visitorsSection.classList.add('hidden'); });
-            document.getElementById('maintenanceLink').addEventListener('click', function() { visitorsSection.classList.add('hidden'); });
+            if (notificationsSection) notificationsSection.classList.add('hidden');
             window.scrollTo(0, 0);
             setActiveTab('visitorsLink');
         }
@@ -1843,10 +1983,10 @@
             const maintenanceSection = document.getElementById('maintenance');
             const visitorsSection = document.getElementById('visitors');
             notificationsSection.classList.remove('hidden');
-            billingSection.classList.add('hidden');
-            eventsSection.classList.add('hidden');
-            residentsSection.classList.add('hidden');
-            mainContent.classList.add('hidden');
+            if (billingSection) billingSection.classList.add('hidden');
+            if (eventsSection) eventsSection.classList.add('hidden');
+            if (residentsSection) residentsSection.classList.add('hidden');
+            if (mainContent) mainContent.classList.add('hidden');
             if (complaintsSection) complaintsSection.classList.add('hidden');
             if (maintenanceSection) maintenanceSection.classList.add('hidden');
             if (visitorsSection) visitorsSection.classList.add('hidden');
@@ -1953,6 +2093,409 @@
             updateNotificationBadge();
         });
 
+        function loadResidentsFromBackend() {
+            fetch('http://localhost:3001/api/residents')
+                .then(response => response.json())
+                .then(residents => {
+                    const tableBody = document.getElementById('residentsTable').querySelector('tbody');
+                    tableBody.innerHTML = ''; // Clear existing rows
+                    residents.forEach(resident => {
+                        const newRow = tableBody.insertRow();
+                        newRow.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap">${resident.name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${resident.flat}</td>
+                            <td class="px-6 py-4 whitespace-nowrap"><span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Family</span></td>
+                            <td class="px-6 py-4 whitespace-nowrap">${resident.phone || ''}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-resident-btn">Edit</button>
+                                <button class="text-red-600 hover:text-red-900 delete-resident-btn">Delete</button>
+                            </td>
+                        `;
+                    });
+                    updateResidentsCount();
+                    updateFamiliesSinglesCount();
+                })
+                .catch(error => {
+                    console.error('Error loading residents:', error);
+                });
+        }
+
+        // Dynamically set Maintenance Due date to 15th of current month
+        function setMaintenanceDueDate() {
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const now = new Date();
+            const monthName = months[now.getMonth()];
+            document.getElementById('maintenanceDueDate').textContent = `Due by 15th ${monthName}`;
+        }
+        window.addEventListener('DOMContentLoaded', setMaintenanceDueDate);
+
+        function loadEventsFromBackend() {
+            fetch('http://localhost:3001/api/events')
+                .then(response => response.json())
+                .then(events => {
+                    const tableBody = document.getElementById('eventsTable').querySelector('tbody');
+                    tableBody.innerHTML = '';
+                    events.forEach(event => {
+                        const newRow = tableBody.insertRow();
+                        newRow.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap">${event.name}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${event.date}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${event.location}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${event.description}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-event-btn">Edit</button>
+                                <button class="text-red-600 hover:text-red-900 delete-event-btn">Delete</button>
+                            </td>
+                        `;
+                    });
+                });
+        }
+
+        function updateUpcomingEventsCountFromBackend() {
+            fetch('http://localhost:3001/api/events')
+                .then(response => response.json())
+                .then(events => {
+                    document.getElementById('upcomingEventsCount').textContent = events.length;
+                })
+                .catch(error => {
+                    document.getElementById('upcomingEventsCount').textContent = '0';
+                });
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            // ...other code...
+            updateUpcomingEventsCountFromBackend();
+        });
+
+        function loadBillsFromBackend() {
+            fetch('http://localhost:3001/api/bills')
+                .then(response => response.json())
+                .then(bills => {
+                    const tableBody = document.getElementById('billsTable').querySelector('tbody');
+                    tableBody.innerHTML = '';
+                    bills.forEach(bill => {
+                        const newRow = tableBody.insertRow();
+                        newRow.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap">${bill.resident}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${bill.amount}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${bill.dueDate}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${bill.status}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-bill-btn">Edit</button>
+                                <button class="text-red-600 hover:text-red-900 delete-bill-btn">Delete</button>
+                            </td>
+                        `;
+                    });
+                });
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            // ...other code...
+            loadBillsFromBackend();
+        });
+
+        function updateMaintenanceDueFromBackend() {
+            fetch('http://localhost:3001/api/bills')
+                .then(response => response.json())
+                .then(bills => {
+                    let total = 0;
+                    bills.forEach(bill => {
+                        if (bill.status === 'Pending') {
+                            // Parse amount as float (in case it's a string)
+                            const amt = parseFloat(bill.amount);
+                            if (!isNaN(amt)) total += amt;
+                        }
+                    });
+                    document.getElementById('dashboardMaintenanceDue').textContent = `₹${total.toLocaleString('en-IN')}`;
+                })
+                .catch(error => {
+                    document.getElementById('dashboardMaintenanceDue').textContent = '₹0';
+                });
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            // ...other code...
+            updateMaintenanceDueFromBackend();
+        });
+
+        function updatePaymentChartFromBackend() {
+            fetch('http://localhost:3001/api/bills')
+                .then(response => response.json())
+                .then(bills => {
+                    let paid = 0, pending = 0, total = 0;
+                    bills.forEach(bill => {
+                        if (bill.status === 'Paid') paid++;
+                        else if (bill.status === 'Pending') pending++;
+                    });
+                    total = paid + pending;
+                    let paidPct = 0, pendingPct = 0;
+                    if (total > 0) {
+                        paidPct = Math.round((paid / total) * 100);
+                        pendingPct = 100 - paidPct;
+                    }
+                    paymentChart.data.datasets[0].data = [paidPct, pendingPct];
+                    paymentChart.update();
+                })
+                .catch(error => {
+                    paymentChart.data.datasets[0].data = [0, 0];
+                    paymentChart.update();
+                });
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            // ...other code...
+            updatePaymentChartFromBackend();
+        });
+
+        document.getElementById('billForm').addEventListener('submit', function() {
+            setTimeout(updatePaymentChartFromBackend, 0);
+        });
+        document.getElementById('billsTable').addEventListener('click', function(e) {
+            if (e.target && (e.target.classList.contains('delete-bill-btn') || e.target.classList.contains('edit-bill-btn') || (e.target.tagName === 'SELECT' && e.target.name === 'billStatus'))) {
+                setTimeout(updatePaymentChartFromBackend, 0);
+            }
+        });
+        window.addEventListener('DOMContentLoaded', function() {
+            updatePaymentChartFromBackend();
+        });
+
+        const visitorsSection = document.getElementById('visitors');
+        if (visitorsSection) visitorsSection.classList.add('hidden');
+
+        function loadComplaintsFromBackend() {
+            fetch('http://localhost:3001/api/complaints')
+                .then(response => response.json())
+                .then(complaints => {
+                    const tableBody = document.getElementById('complaintsTable').querySelector('tbody');
+                    tableBody.innerHTML = '';
+                    complaints.forEach(complaint => {
+                        const newRow = tableBody.insertRow();
+                        newRow.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap">${complaint.resident}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${complaint.subject}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${complaint.date}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${complaint.status}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-complaint-btn">Edit</button>
+                                <button class="text-red-600 hover:text-red-900 delete-complaint-btn">Delete</button>
+                            </td>
+                        `;
+                    });
+                });
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            // ...other code...
+            loadComplaintsFromBackend();
+        });
+
+        // ... existing code ...
+        window.addEventListener('DOMContentLoaded', function() {
+            // ...other code...
+
+            // Attach the complaintsTable delete event listener only once
+            document.getElementById('complaintsTable').addEventListener('click', function(e) {
+                if (e.target && e.target.classList.contains('delete-complaint-btn')) {
+                    const row = e.target.closest('tr');
+                    if (row) {
+                        if (confirm('Are you sure you want to delete this complaint?')) {
+                            // Get the complaint's resident, subject, date, and status from the row
+                            const resident = row.cells[0].textContent;
+                            const subject = row.cells[1].textContent;
+                            const date = row.cells[2].textContent;
+                            const status = row.cells[3].textContent;
+                            // Find the complaint in the backend data to get the id
+                            fetch('http://localhost:3001/api/complaints')
+                                .then(response => response.json())
+                                .then(complaints => {
+                                    const complaint = complaints.find(c =>
+                                        c.resident === resident &&
+                                        c.subject === subject &&
+                                        c.date === date &&
+                                        c.status === status
+                                    );
+                                    if (complaint) {
+                                        fetch(`http://localhost:3001/api/complaints/${complaint.id}`, {
+                                            method: 'DELETE'
+                                        })
+                                        .then(response => response.json())
+                                        .then(data => {
+                                            if (data.success) {
+                                                loadComplaintsFromBackend(); // Refresh the list
+                                            } else {
+                                                alert('Failed to delete complaint from backend.');
+                                            }
+                                        })
+                                        .catch(error => {
+                                            alert('Error deleting complaint: ' + error);
+                                        });
+                                    } else {
+                                        alert('Complaint not found in backend.');
+                                    }
+                                });
+                        }
+                    }
+                }
+            });
+
+            // ...other code...
+        });
+        // ... existing code ...
+
+        function updateNewComplaintsDashboard() {
+            fetch('http://localhost:3001/api/complaints')
+                .then(response => response.json())
+                .then(complaints => {
+                    // Filter for new complaints (e.g., today's date)
+                    const today = new Date().toISOString().slice(0, 10);
+                    const newComplaints = complaints.filter(c => c.date === today);
+
+                    // Update the dashboard count and list
+                    const newTodayElem = document.getElementById('dashboardNewComplaintsToday');
+                    if (newTodayElem) {
+                        if (newComplaints.length > 0) {
+                            newTodayElem.innerHTML = `<i class='fas fa-arrow-up mr-1'></i> ${newComplaints.length} new today`;
+                            newTodayElem.style.display = '';
+                        } else {
+                            newTodayElem.style.display = 'none';
+                        }
+                    }
+
+                    // Optionally, update a list of new complaints if you have a section for it
+                    // Example:
+                    // const newComplaintsList = document.getElementById('newComplaintsList');
+                    // if (newComplaintsList) {
+                    //     newComplaintsList.innerHTML = newComplaints.map(c =>
+                    //         `<li>${c.resident}: ${c.subject}</li>`
+                    //     ).join('');
+                    // }
+                });
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            // ...other code...
+            updateNewComplaintsDashboard();
+        });
+
+        document.getElementById('complaintForm').addEventListener('submit', function() {
+            setTimeout(updateNewComplaintsDashboard, 0);
+        });
+        document.getElementById('complaintsTable').addEventListener('click', function(e) {
+            if (e.target && (e.target.classList.contains('delete-complaint-btn') || e.target.classList.contains('edit-complaint-btn'))) {
+                setTimeout(updateNewComplaintsDashboard, 0);
+            }
+        });
+
+        function updateRecentActivityFromBackend() {
+            // Fetch all activity types in parallel
+            Promise.all([
+                fetch('http://localhost:3001/api/complaints').then(r => r.json()),
+                fetch('http://localhost:3001/api/events').then(r => r.json()),
+                fetch('http://localhost:3001/api/bills').then(r => r.json())
+            ]).then(([complaints, events, bills]) => {
+                // Map all activities to a common format
+                const activities = [];
+                complaints.forEach(c => activities.push({
+                    type: 'complaint',
+                    date: c.date,
+                    label: 'New complaint',
+                    icon: 'exclamation-triangle',
+                    iconBg: 'bg-red-100',
+                    iconColor: 'text-red-600',
+                    desc: `${c.subject} reported by ${c.resident}`
+                }));
+                events.forEach(ev => activities.push({
+                    type: 'event',
+                    date: ev.date,
+                    label: 'New event',
+                    icon: 'calendar-plus',
+                    iconBg: 'bg-blue-100',
+                    iconColor: 'text-blue-600',
+                    desc: `${ev.name} at ${ev.location}`
+                }));
+                bills.forEach(bill => activities.push({
+                    type: 'bill',
+                    date: bill.dueDate,
+                    label: bill.status === 'Paid' ? 'Maintenance paid' : 'Bill generated',
+                    icon: bill.status === 'Paid' ? 'check-circle' : 'file-invoice-dollar',
+                    iconBg: bill.status === 'Paid' ? 'bg-green-100' : 'bg-yellow-100',
+                    iconColor: bill.status === 'Paid' ? 'text-green-600' : 'text-yellow-600',
+                    desc: bill.status === 'Paid' ? `${bill.resident} paid maintenance` : `${bill.resident} bill of ₹${bill.amount}`
+                }));
+                // Sort all activities by date descending
+                activities.sort((a, b) => new Date(b.date) - new Date(a.date));
+                // Take the latest 4 activities
+                const recent = activities.slice(0, 4);
+                // Render in the Recent Activity section
+                const activitySection = document.querySelector('.space-y-4');
+                if (activitySection) {
+                    activitySection.innerHTML = recent.map(a => `
+                        <div class="flex items-start">
+                            <div class="${a.iconBg} p-2 rounded-full mr-3">
+                                <i class="fas fa-${a.icon} ${a.iconColor}"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">${a.label}</p>
+                                <p class="text-gray-500 text-sm">${a.desc}</p>
+                                <p class="text-gray-400 text-xs mt-1">${a.date}</p>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+            });
+        }
+
+        // ... existing code ...
+        window.addEventListener('DOMContentLoaded', function() {
+            // ...other code...
+            updateRecentActivityFromBackend();
+        });
+
+        document.getElementById('complaintForm').addEventListener('submit', function() {
+            setTimeout(updateRecentActivityFromBackend, 0);
+        });
+        document.getElementById('complaintsTable').addEventListener('click', function(e) {
+            if (e.target && (e.target.classList.contains('delete-complaint-btn') || e.target.classList.contains('edit-complaint-btn'))) {
+                setTimeout(updateRecentActivityFromBackend, 0);
+            }
+        });
+        // ... existing code ...
+
+        // 1. Load maintenance tasks from backend
+        function loadMaintenanceFromBackend() {
+            fetch('http://localhost:3001/api/maintenance')
+                .then(response => response.json())
+                .then(tasks => {
+                    const tableBody = document.getElementById('maintenanceTable').querySelector('tbody');
+                    tableBody.innerHTML = '';
+                    tasks.forEach(task => {
+                        const newRow = tableBody.insertRow();
+                        newRow.innerHTML = `
+                            <td class="px-6 py-4 whitespace-nowrap">${task.title}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${task.description}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${task.date}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">${task.status}</td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <button class="text-indigo-600 hover:text-indigo-900 mr-3 edit-maintenance-btn">Edit</button>
+                                <button class="text-red-600 hover:text-red-900 delete-maintenance-btn">Delete</button>
+                            </td>`;
+                        newRow.dataset.id = task.id;
+                    });
+                });
+        }
+
+        window.addEventListener('DOMContentLoaded', function() {
+            // ...other code...
+            document.getElementById('maintenanceLink').addEventListener('click', function(e) {
+                e.preventDefault();
+                showMaintenanceSection();
+            });
+            // ...other code...
+        });
+
+        window.addEventListener('DOMContentLoaded', function() {
+            loadMaintenanceFromBackend();
+        });
     </script>
-<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - 🧬 <a href="https://enzostvs-deepsite.hf.space?remix=sap1503/kutrefortune" style="color: #fff;text-decoration: underline;" target="_blank" >Remix</a></p></body>
+</body>
 </html>
